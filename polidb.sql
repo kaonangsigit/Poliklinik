@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Waktu pembuatan: 05 Des 2024 pada 22.39
+-- Waktu pembuatan: 08 Des 2024 pada 20.39
 -- Versi server: 10.4.21-MariaDB
 -- Versi PHP: 8.0.19
 
@@ -43,7 +43,10 @@ CREATE TABLE `daftar_poli` (
 
 INSERT INTO `daftar_poli` (`id`, `id_pasien`, `id_jadwal`, `keluhan`, `no_antrian`, `status`, `created_at`) VALUES
 (40, 21, 7, 'sakit', 1, 'menunggu', '2024-12-05 20:56:12'),
-(42, 20, 7, 'sakit', 2, 'menunggu', '2024-12-05 21:33:57');
+(42, 20, 7, 'sakit', 2, 'menunggu', '2024-12-05 21:33:57'),
+(43, 19, 9, 'sakit', 1, 'selesai', '2024-12-05 21:42:57'),
+(44, 20, 9, 'sakit', 2, 'selesai', '2024-12-05 21:56:28'),
+(45, 19, 9, 'sakit', 3, 'selesai', '2024-12-05 22:19:18');
 
 -- --------------------------------------------------------
 
@@ -79,7 +82,8 @@ CREATE TABLE `dokter` (
 
 INSERT INTO `dokter` (`id`, `nama`, `alamat`, `no_hp`, `id_poli`, `username`, `password`) VALUES
 (15, 'Amel', 'semarang', '0812347454545', 10, 'dr.amel', '$2y$10$EbyXDF0SxjSvOMh6tViiZuR0kRLn5AsgSlpWvmGMR1CjdNee5or0m'),
-(16, 'Konang', 'semarang', '02312313123', 6, 'dr.konang', '$2y$10$OukYzRzp3.it5uJXc5HHvedRN8e083INC87PucmTJc0s8V95Xuvq6');
+(16, 'Konang', 'semarang', '02312313123', 6, 'dr.konang', '$2y$10$OukYzRzp3.it5uJXc5HHvedRN8e083INC87PucmTJc0s8V95Xuvq6'),
+(21, 'Ifan', 'Semarang', '0812346567567', 8, 'Ifan', '$2y$10$w3uUFnaurY0drPE7EQUxo.bELRWCEkjexix7MiVj9d2UCVyeGA5HC');
 
 -- --------------------------------------------------------
 
@@ -101,7 +105,8 @@ CREATE TABLE `jadwal_periksa` (
 --
 
 INSERT INTO `jadwal_periksa` (`id`, `id_dokter`, `hari`, `jam_mulai`, `jam_selesai`, `status`) VALUES
-(8, 15, 'Selasa', '08:00:00', '12:00:00', 'aktif');
+(8, 15, 'Selasa', '08:00:00', '12:00:00', 'aktif'),
+(9, 16, 'Senin', '08:00:00', '12:00:00', 'aktif');
 
 -- --------------------------------------------------------
 
@@ -125,7 +130,7 @@ INSERT INTO `obat` (`id`, `nama_obat`, `kemasan`, `harga`) VALUES
 (3, 'Amoxicillin', 'Kapsul', 25000),
 (4, 'Omeprazole', 'Tablet', 15000),
 (5, 'Laserin', 'cair', 20000),
-(6, 'Paracetamol', 'tablet', 5000);
+(13, 'Paracetamol', 'tablet', 5000);
 
 -- --------------------------------------------------------
 
@@ -139,16 +144,19 @@ CREATE TABLE `pasien` (
   `alamat` varchar(255) NOT NULL,
   `no_ktp` varchar(255) NOT NULL,
   `no_hp` varchar(50) NOT NULL,
-  `no_rm` varchar(25) NOT NULL
+  `no_rm` varchar(25) NOT NULL,
+  `username` varchar(50) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data untuk tabel `pasien`
 --
 
-INSERT INTO `pasien` (`id`, `nama`, `alamat`, `no_ktp`, `no_hp`, `no_rm`) VALUES
-(19, 'Kaonang', 'semarang', '1111111111111112', '0812346567567', '202412-002'),
-(20, 'ari pri', 'Blora\r\n', '1111111111111122', '02312313123', '202412-003');
+INSERT INTO `pasien` (`id`, `nama`, `alamat`, `no_ktp`, `no_hp`, `no_rm`, `username`, `password`) VALUES
+(19, 'Kaonang', 'semarang', '1111111111111112', '0812346567567', '202412-002', 'Kaonang', '$2y$10$8CrhvgElz8oXgEudNgqRYui3PGcK4Zzc6M73PVXscLSBycu6b2LqO'),
+(30, 'Adi', 'Semarang', '1111111111111114', '083424234234', '202412-005', 'Adi', '$2y$10$xuAD.jd/X2gK287DPd5qRO9WS0E3w8Jg6XP6hO6mh1kh5EZ/KA9DS'),
+(31, 'Ali', 'Semarang', '1111111111111115', '034234324342', '202412-006', 'Ali', '$2y$10$E0GsSHroE6vUXrFRtkS2tuhBt8KGntiDaXJvI9d39slJlAaCLAF0K');
 
 -- --------------------------------------------------------
 
@@ -163,6 +171,15 @@ CREATE TABLE `periksa` (
   `catatan` text DEFAULT NULL,
   `biaya_periksa` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data untuk tabel `periksa`
+--
+
+INSERT INTO `periksa` (`id`, `id_daftar_poli`, `tgl_periksa`, `catatan`, `biaya_periksa`) VALUES
+(7, 43, '2024-12-05 22:54:49', 'sips', 150000),
+(8, 44, '2024-12-05 23:06:53', 'sips', 150000),
+(9, 45, '2024-12-06 00:26:38', 'sipa', 150000);
 
 -- --------------------------------------------------------
 
@@ -203,7 +220,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
-(1, 'admin', '0192023a7bbd73250516f069df18b500', 'admin');
+(4, 'admin', '21232f297a57a5a743894a0e4a801fc3', 'admin');
 
 --
 -- Indexes for dumped tables
@@ -250,7 +267,8 @@ ALTER TABLE `obat`
 -- Indeks untuk tabel `pasien`
 --
 ALTER TABLE `pasien`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`);
 
 --
 -- Indeks untuk tabel `periksa`
@@ -280,7 +298,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT untuk tabel `daftar_poli`
 --
 ALTER TABLE `daftar_poli`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_periksa`
@@ -292,31 +310,31 @@ ALTER TABLE `detail_periksa`
 -- AUTO_INCREMENT untuk tabel `dokter`
 --
 ALTER TABLE `dokter`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT untuk tabel `jadwal_periksa`
 --
 ALTER TABLE `jadwal_periksa`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT untuk tabel `obat`
 --
 ALTER TABLE `obat`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT untuk tabel `pasien`
 --
 ALTER TABLE `pasien`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT untuk tabel `periksa`
 --
 ALTER TABLE `periksa`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT untuk tabel `poli`
@@ -328,7 +346,7 @@ ALTER TABLE `poli`
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
