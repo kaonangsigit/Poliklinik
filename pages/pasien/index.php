@@ -29,20 +29,51 @@ $pendaftaran = mysqli_fetch_assoc($result_daftar);
 if(isset($_POST['batalkan'])) {
     $id_daftar = $_POST['id_daftar'];
     
-    // Hapus pendaftaran
-    mysqli_query($koneksi, "DELETE FROM daftar_poli WHERE id = '$id_daftar' AND id_pasien = '$id_pasien' AND status = 'menunggu'");
+    // Cek status pendaftaran terlebih dahulu
+    $check_status = "SELECT status FROM daftar_poli WHERE id = '$id_daftar' AND id_pasien = '$id_pasien'";
+    $result_status = mysqli_query($koneksi, $check_status);
+    $status_data = mysqli_fetch_assoc($result_status);
     
-    echo "<script>
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: 'Pendaftaran berhasil dibatalkan',
-            showConfirmButton: false,
-            timer: 1500
-        }).then(() => {
-            window.location.href = 'index.php';
-        });
-    </script>";
+    if($status_data['status'] != 'menunggu') {
+        echo "<script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Tidak Dapat Dibatalkan',
+                text: 'Pendaftaran tidak dapat dibatalkan karena status sudah " . $status_data['status'] . "',
+                confirmButtonColor: '#d33'
+            });
+        </script>";
+        exit();
+    }
+    
+    // Jika status masih 'menunggu', proses pembatalan
+    $query_batal = "DELETE FROM daftar_poli 
+                    WHERE id = '$id_daftar' 
+                    AND id_pasien = '$id_pasien' 
+                    AND status = 'menunggu'";
+    
+    if(mysqli_query($koneksi, $query_batal)) {
+        echo "<script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Pendaftaran berhasil dibatalkan',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                window.location.href = 'index.php';
+            });
+        </script>";
+    } else {
+        echo "<script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: 'Terjadi kesalahan saat membatalkan pendaftaran',
+                confirmButtonColor: '#d33'
+            });
+        </script>";
+    }
     exit();
 }
 ?>
@@ -115,11 +146,14 @@ if(isset($_POST['batalkan'])) {
                             </div>
                             
                             <div class="mt-4">
-                                <span class="badge badge-pill badge-warning px-4 py-2" style="font-size: 1rem;">
-                                    <i class="fas fa-hourglass-half mr-2"></i> Status: Menunggu
+                                <span class="badge badge-pill px-4 py-2" style="font-size: 1rem;" id="status-badge">
+                                    <i class="fas fa-hourglass-half mr-2"></i> Status: 
+                                    <span id="status-text"><?php echo ucfirst($pendaftaran['status']); ?></span>
                                 </span>
                                 <button onclick="konfirmasiBatal(<?php echo $pendaftaran['id']; ?>)" 
-                                        class="btn btn-danger btn-lg ml-3">
+                                        class="btn btn-danger btn-lg ml-3"
+                                        id="btn-batal"
+                                        style="display: <?php echo $pendaftaran['status'] != 'menunggu' ? 'none' : 'inline-block'; ?>">
                                     <i class="fas fa-times-circle"></i> Batalkan Pendaftaran
                                 </button>
                             </div>
@@ -213,6 +247,18 @@ if(isset($_POST['batalkan'])) {
 .badge-pill {
     border-radius: 50rem;
 }
+
+.badge, .btn {
+    transition: all 0.3s ease-in-out;
+}
+
+#btn-batal {
+    transition: opacity 0.3s ease-in-out, display 0.3s ease-in-out;
+}
+
+.badge i {
+    transition: all 0.3s ease-in-out;
+}
 </style>
 
 <!-- Script untuk konfirmasi pembatalan -->
@@ -232,8 +278,10 @@ function konfirmasiBatal(id) {
             // Submit form pembatalan
             let form = document.createElement('form');
             form.method = 'POST';
-            form.innerHTML = `<input type="hidden" name="id_daftar" value="${id}">
-                            <input type="hidden" name="batalkan" value="1">`;
+            form.innerHTML = `
+                <input type="hidden" name="id_daftar" value="${id}">
+                <input type="hidden" name="batalkan" value="1">
+            `;
             document.body.appendChild(form);
             form.submit();
         }
@@ -251,6 +299,83 @@ function konfirmasiBatal(id) {
     });
     <?php unset($_SESSION['daftar_sukses']); ?>
 <?php } ?>
+
+function updateStatusBadge(status) {
+    const statusBadge = $('#status-badge');
+    const statusText = $('#status-text');
+    const btnBatal = $('#btn-batal');
+    
+    // Update text dan kapitalisasi huruf pertama
+    statusText.text(status.charAt(0).toUpperCase() + status.slice(1));
+    
+    // Update warna badge dan icon
+    statusBadge.removeClass('badge-warning badge-success badge-danger badge-info');
+    let iconClass = 'fas ';
+    
+    switch(status) {
+        case 'menunggu':
+            statusBadge.addClass('badge-warning');
+            iconClass += 'fa-hourglass-half';
+            btnBatal.fadeIn(); // Tampilkan tombol dengan animasi
+            break;
+        case 'selesai':
+            statusBadge.addClass('badge-success');
+            iconClass += 'fa-check-circle';
+            btnBatal.fadeOut(); // Sembunyikan tombol dengan animasi
+            break;
+        case 'batal':
+            statusBadge.addClass('badge-danger');
+            iconClass += 'fa-times-circle';
+            btnBatal.fadeOut();
+            break;
+        case 'dalam_pemeriksaan':
+            statusBadge.addClass('badge-info');
+            iconClass += 'fa-stethoscope';
+            btnBatal.fadeOut();
+            break;
+        default:
+            statusBadge.addClass('badge-secondary');
+            iconClass += 'fa-question-circle';
+            btnBatal.fadeOut();
+    }
+    
+    // Update icon dengan animasi
+    statusBadge.find('i')
+        .fadeOut(200, function() {
+            $(this).attr('class', iconClass + ' mr-2').fadeIn(200);
+        });
+}
+
+function updateStatus() {
+    const pendaftaranId = <?php echo $pendaftaran['id']; ?>;
+    
+    $.ajax({
+        url: 'check-status.php',
+        type: 'POST',
+        data: { id_daftar: pendaftaranId },
+        dataType: 'json',
+        success: function(response) {
+            if(response.success) {
+                updateStatusBadge(response.status);
+                
+                // Jika status sudah selesai atau batal, hentikan interval
+                if(response.status === 'selesai' || response.status === 'batal') {
+                    clearInterval(statusInterval);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating status:', error);
+        }
+    });
+}
+
+// Jalankan update pertama kali
+$(document).ready(function() {
+    updateStatus();
+    // Update setiap 5 detik
+    const statusInterval = setInterval(updateStatus, 5000);
+});
 </script>
 
 <?php include_once("layouts/footer.php"); ?> 
