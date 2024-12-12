@@ -5,7 +5,7 @@ To run this project, install it locally using npm on your pc
 https://github.com/kaonangsigit/Poliklinik.git
 
 # change directory to Poliklinik 
-$ cd CC
+$ cd Poliklinik
 ```
 # Login Admin
 ```sh
