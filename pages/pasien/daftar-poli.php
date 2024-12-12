@@ -215,18 +215,22 @@ if (isset($_GET['success']) && isset($_SESSION['pendaftaran_sukses'])) {
     <!-- Main content -->
     <section class="content">
         <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card card-primary shadow">
                         <div class="card-header">
-                            <h3 class="card-title">Form Pendaftaran Poli</h3>
+                            <h3 class="card-title">
+                                <i class="fas fa-hospital-user mr-2"></i>Form Pendaftaran Poli
+                            </h3>
                         </div>
                         <form action="" method="post">
                             <div class="card-body">
                                 <div class="form-group">
-                                    <label>Pilih Poli</label>
-                                    <select class="form-control" id="poli" name="id_poli" required>
-                                        <option value="">Pilih Poli</option>
+                                    <label for="poli">
+                                        <i class="fas fa-hospital mr-1"></i> Pilih Poli
+                                    </label>
+                                    <select class="form-control select2bs4" id="poli" name="id_poli" required>
+                                        <option value="">-- Pilih Poli --</option>
                                         <?php while($poli = mysqli_fetch_assoc($result_poli)) { ?>
                                             <option value="<?php echo $poli['id']; ?>">
                                                 <?php echo $poli['nama_poli']; ?>
@@ -235,18 +239,25 @@ if (isset($_GET['success']) && isset($_SESSION['pendaftaran_sukses'])) {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Pilih Jadwal Dokter</label>
-                                    <select class="form-control" name="id_jadwal" id="jadwal" required>
-                                        <option value="">Pilih Jadwal</option>
+                                    <label for="jadwal">
+                                        <i class="fas fa-calendar-alt mr-1"></i> Pilih Jadwal Dokter
+                                    </label>
+                                    <select class="form-control select2bs4" name="id_jadwal" id="jadwal" required>
+                                        <option value="">-- Pilih Jadwal --</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Keluhan</label>
-                                    <textarea class="form-control" name="keluhan" rows="3" required></textarea>
+                                    <label for="keluhan">
+                                        <i class="fas fa-notes-medical mr-1"></i> Keluhan
+                                    </label>
+                                    <textarea class="form-control" id="keluhan" name="keluhan" rows="4" 
+                                              placeholder="Tuliskan keluhan Anda di sini..." required></textarea>
                                 </div>
                             </div>
-                            <div class="card-footer">
-                                <button type="submit" name="daftar" class="btn btn-primary">Daftar</button>
+                            <div class="card-footer text-center">
+                                <button type="submit" name="daftar" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-check-circle mr-2"></i>Daftar
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -408,6 +419,155 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+});
+</script>
+
+<!-- CSS tambahan -->
+<style>
+/* Reset dan base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Card styles */
+.card {
+    border-radius: 15px;
+    border: none;
+    margin-bottom: 30px;
+}
+
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    padding: 15px 20px;
+}
+
+.card-body {
+    padding: 25px;
+}
+
+/* Form styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-control {
+    height: auto;
+    padding: 0.75rem 1rem;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+/* Select2 fixes */
+.select2-container--bootstrap4 {
+    display: block;
+    width: 100% !important;
+}
+
+.select2-container--bootstrap4 .select2-selection {
+    height: 45px !important;
+    border-radius: 8px !important;
+    border: 1px solid #ced4da !important;
+}
+
+.select2-container--bootstrap4 .select2-selection--single {
+    padding: 0.375rem 0.75rem !important;
+}
+
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+    padding: 5px 0 !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+    margin-top: 0 !important;
+}
+
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+    height: 43px !important;
+    width: 30px !important;
+    right: 3px !important;
+}
+
+.select2-container--bootstrap4 .select2-results__option {
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.select2-container--bootstrap4 .select2-search--dropdown .select2-search__field {
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.select2-container--bootstrap4 .select2-dropdown {
+    border-color: #80bdff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Textarea */
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Button */
+.btn-primary {
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 50px;
+    box-shadow: 0 4px 6px rgba(50,50,93,.11);
+    transition: all 0.3s ease;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 15px;
+    }
+    
+    .btn-primary {
+        width: 100%;
+        padding: 10px 20px;
+    }
+    
+    .select2-container--bootstrap4 .select2-selection {
+        height: 40px !important;
+    }
+    
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        height: 38px !important;
+    }
+}
+
+/* Fix untuk dropdown yang terpotong */
+.select2-container--open .select2-dropdown {
+    margin-top: 3px;
+}
+
+.select2-container--bootstrap4.select2-container--focus .select2-selection {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25) !important;
+}
+
+/* Fix untuk placeholder */
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__placeholder {
+    color: #6c757d;
+    line-height: 2;
+}
+</style>
+
+<!-- Tambahkan ini di bagian bawah sebelum closing body -->
+<script>
+$(document).ready(function() {
+    $('.select2bs4').select2({
+        theme: 'bootstrap4',
+        width: '100%',
+        placeholder: 'Pilih opsi',
+        allowClear: true,
+        dropdownAutoWidth: true
     });
 });
 </script>

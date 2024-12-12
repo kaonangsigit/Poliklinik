@@ -103,66 +103,11 @@ $result = mysqli_stmt_get_result($stmt);
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-info btn-sm" 
-                                            data-toggle="modal" 
-                                            data-target="#detailModal<?php echo $row['id_periksa']; ?>">
+                                            onclick="showDetail(<?php echo $row['id_periksa']; ?>)">
                                         <i class="fas fa-info-circle"></i> Detail
                                     </button>
                                 </td>
                             </tr>
-
-                            <!-- Modal Detail dengan informasi lengkap -->
-                            <div class="modal fade" id="detailModal<?php echo $row['id_periksa']; ?>">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header bg-info">
-                                            <h5 class="modal-title text-white">
-                                                <i class="fas fa-info-circle mr-2"></i>Detail Pasien: <?php echo $row['nama_pasien']; ?>
-                                            </h5>
-                                            <button type="button" class="close text-white" data-dismiss="modal">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                
-                                            <?php
-                                            // Query untuk mendapatkan detail lengkap pasien
-                                            $query_detail = "SELECT 
-                                                p.*,
-                                                dp.keluhan,
-                                                dp.no_antrian,
-                                                pr.tgl_periksa,
-                                                pr.catatan,
-                                                d.nama as nama_dokter,
-                                                pol.nama_poli,
-                                                GROUP_CONCAT(o.nama_obat) as obat_diberikan,
-                                                SUM(o.harga) as total_obat
-                                            FROM pasien p 
-                                            JOIN daftar_poli dp ON p.id = dp.id_pasien
-                                            JOIN jadwal_periksa jp ON dp.id_jadwal = jp.id
-                                            JOIN dokter d ON jp.id_dokter = d.id
-                                            JOIN poli pol ON d.id_poli = pol.id
-                                            LEFT JOIN periksa pr ON dp.id = pr.id_daftar_poli
-                                            LEFT JOIN detail_periksa dpr ON pr.id = dpr.id_periksa
-                                            LEFT JOIN obat o ON dpr.id_obat = o.id
-                                            WHERE pr.id = ?
-                                            GROUP BY pr.id";
-                                            
-                                            $stmt_detail = mysqli_prepare($koneksi, $query_detail);
-                                            mysqli_stmt_bind_param($stmt_detail, "i", $row['id_periksa']);
-                                            mysqli_stmt_execute($stmt_detail);
-                                            $result_detail = mysqli_stmt_get_result($stmt_detail);
-                                            $detail = mysqli_fetch_assoc($result_detail);
-                                            ?>
-
-                                            <!-- Informasi lengkap dalam modal -->
-                                            <!-- ... (kode modal detail yang sudah ada tetap sama) ... -->
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             <?php } ?>
                         </tbody>
                     </table>
@@ -175,6 +120,28 @@ $result = mysqli_stmt_get_result($stmt);
             </div>
         </div>
     </section>
+</div>
+
+<!-- Modal Container -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white" id="detailModalLabel">
+                    <i class="fas fa-info-circle mr-2"></i>Detail Pasien
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Data detail akan dimuat di sini -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -202,6 +169,30 @@ $(document).ready(function() {
             }
         ]
     });
+});
+
+function showDetail(id_periksa) {
+    $.ajax({
+        url: 'get_detail_pasien.php',
+        type: 'POST',
+        data: {id_periksa: id_periksa},
+        success: function(response) {
+            $('#detailModal .modal-body').html(response);
+            $('#detailModal').modal('show');
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Terjadi kesalahan saat mengambil data!'
+            });
+        }
+    });
+}
+
+// Tambahkan ini untuk membersihkan modal saat ditutup
+$('#detailModal').on('hidden.bs.modal', function () {
+    $(this).find('.modal-body').html('');
 });
 </script>
 
