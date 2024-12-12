@@ -59,9 +59,91 @@ if (isset($_POST['register'])) {
     <link rel="stylesheet" href="../assets/plugins/fontawesome-free/css/all.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="../assets/dist/css/adminlte.min.css">
+    <style>
+        .register-page {
+            background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .register-box {
+            width: 420px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 15px;
+            border: none;
+            border-top: 5px solid #1e88e5;
+        }
+        .register-logo a {
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .login-box-msg {
+            color: #1e88e5;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        .input-group-text {
+            border: none;
+            background: transparent;
+            color: #1e88e5;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px;
+            border: 2px solid #e3f2fd;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 0.2rem rgba(30,136,229,0.15);
+        }
+        .btn-primary {
+            background: #1e88e5;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30,136,229,0.3);
+        }
+        .toggle-password {
+            cursor: pointer;
+            padding: 8px;
+            color: #1e88e5;
+            transition: all 0.3s ease;
+        }
+        .toggle-password:hover {
+            color: #1976d2;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .login-link a {
+            color: #1e88e5;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .login-link a:hover {
+            color: #1976d2;
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body class="hold-transition register-page">
-<div class="register-box" style="width: 420px;">
+<div class="register-box">
     <div class="register-logo">
         <a href="../index.php"><b>Registrasi</b> Pasien</a>
     </div>
@@ -144,6 +226,10 @@ if (isset($_POST['register'])) {
                     </div>
                 </div>
             </form>
+            
+            <div class="login-link">
+                Sudah punya akun? <a href="login.php?role=pasien">Login</a>
+            </div>
         </div>
     </div>
 </div>
@@ -170,15 +256,6 @@ function togglePassword() {
         toggleIcon.classList.add("fa-eye");
     }
 }
-
-// Set password field sebagai text saat halaman dimuat
-document.addEventListener('DOMContentLoaded', function() {
-    var passwordField = document.getElementById("password");
-    var toggleIcon = document.getElementById("toggleIcon");
-    passwordField.type = "text";
-    toggleIcon.classList.remove("fa-eye");
-    toggleIcon.classList.add("fa-eye-slash");
-});
 </script>
 </body>
 </html> 
