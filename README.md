@@ -10,16 +10,22 @@ $ cd CC
 ## Login
 #Login Admin
 ```sh
-# Username Admin
-# Pass admin
+# Username
+ Admin
+# Pass
+ admin
 ```
 #Dokter
 ```sh
-# Username Ifan
-# Pass Semarang
+# Username
+Ifan
+# Pass
+Semarang
 ```
 #Pasien
 ```sh
-# Username Adi
-# Pass Semarang
+# Username
+ Adi
+# Pass
+ Semarang
 ```
