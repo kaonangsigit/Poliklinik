@@ -8,21 +8,21 @@ https://github.com/kaonangsigit/Poliklinik.git
 $ cd CC
 ```
 ## Login
-#Login Admin
+# Login Admin
 ```sh
 # Username
  Admin
 # Pass
  admin
 ```
-#Dokter
+# Dokter
 ```sh
 # Username
 Ifan
 # Pass
 Semarang
 ```
-#Pasien
+# Pasien
 ```sh
 # Username
  Adi
