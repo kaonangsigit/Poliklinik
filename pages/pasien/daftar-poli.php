@@ -14,6 +14,27 @@ if (isset($_POST['daftar'])) {
     $id_jadwal = $_POST['id_jadwal'];
     $keluhan = mysqli_real_escape_string($koneksi, $_POST['keluhan']);
     
+    // Cek status jadwal
+    $check_jadwal = "SELECT status FROM jadwal_periksa WHERE id = '$id_jadwal'";
+    $result_jadwal = mysqli_query($koneksi, $check_jadwal);
+    $jadwal = mysqli_fetch_assoc($result_jadwal);
+    
+    if (!$jadwal || $jadwal['status'] !== 'aktif') {
+        echo "<script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Jadwal Tidak Tersedia',
+                text: 'Jadwal yang Anda pilih tidak aktif atau tidak tersedia.',
+                confirmButtonColor: '#3085d6'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href='daftar-poli.php';
+                }
+            });
+        </script>";
+        exit;
+    }
+    
     // Cek apakah pasien sudah mendaftar di poli manapun hari ini
     $check_today_query = "SELECT dp.*, p.nama_poli 
                          FROM daftar_poli dp
@@ -32,26 +53,6 @@ if (isset($_POST['daftar'])) {
                 title: 'Tidak Dapat Mendaftar',
                 text: 'Anda sudah mendaftar di poli " . $poli_data['nama_poli'] . " untuk hari ini! Tidak dapat mendaftar di poli lain pada hari yang sama.',
                 confirmButtonText: 'OK',
-                confirmButtonColor: '#3085d6'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href='daftar-poli.php';
-                }
-            });
-        </script>";
-        exit;
-    }
-    
-    // Cek apakah jadwal valid
-    $check_jadwal = "SELECT * FROM jadwal_periksa WHERE id = '$id_jadwal'";
-    $result_jadwal = mysqli_query($koneksi, $check_jadwal);
-    
-    if (mysqli_num_rows($result_jadwal) == 0) {
-        echo "<script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Jadwal Tidak Valid',
-                text: 'Silakan pilih jadwal yang tersedia.',
                 confirmButtonColor: '#3085d6'
             }).then((result) => {
                 if (result.isConfirmed) {

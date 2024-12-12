@@ -13,6 +13,7 @@ if(isset($_POST['id_poli'])) {
               FROM jadwal_periksa jp
               JOIN dokter d ON jp.id_dokter = d.id
               WHERE d.id_poli = '$id_poli'
+              AND jp.status = 'aktif'
               ORDER BY FIELD(jp.hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'), 
                        jp.jam_mulai";
     
@@ -39,7 +40,7 @@ if(isset($_POST['id_poli'])) {
                  "</option>";
         }
     } else {
-        echo "<option value=''>Tidak ada jadwal tersedia untuk poli ini</option>";
+        echo "<option value=''>Tidak ada jadwal aktif untuk poli ini</option>";
     }
 } else {
     echo "<option value=''>Pilih poli terlebih dahulu</option>";

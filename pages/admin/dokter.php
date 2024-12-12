@@ -68,10 +68,8 @@ if (isset($_POST['edit'])) {
         $alamat = $_POST['alamat'];
         $no_hp = $_POST['no_hp'];
         $id_poli = $_POST['id_poli'];
-        
-        // Generate username otomatis saat edit
-        //$username = 'dr.' . strtolower(str_replace(' ', '', $nama));
         $username = $nama;
+        
         // Cek apakah username sudah ada (kecuali untuk dokter yang sedang diedit)
         $check_query = "SELECT * FROM dokter WHERE username = '$username' AND id != $id";
         $check_result = mysqli_query($koneksi, $check_query);
@@ -80,13 +78,25 @@ if (isset($_POST['edit'])) {
             throw new Exception('Username sudah digunakan!');
         }
         
+        // Perbaikan query update
         if (!empty($_POST['password'])) {
             $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-            $query = "UPDATE dokter SET nama='$nama', alamat='$alamat', no_hp='$no_hp', 
-                     id_poli=$id_poli, username='$username', password='$password' WHERE id=$id";
+            $query = "UPDATE dokter SET 
+                     nama = '$nama', 
+                     alamat = '$alamat', 
+                     no_hp = '$no_hp', 
+                     id_poli = $id_poli, 
+                     username = '$username', 
+                     password = '$password' 
+                     WHERE id = $id";
         } else {
-            $query = "UPDATE dokter SET nama='$nama', alamat='$alamat', no_hp='$no_hp', 
-                     id_poli=$id_poli, username='$username' WHERE id=$id";
+            $query = "UPDATE dokter SET 
+                     nama = '$nama', 
+                     alamat = '$alamat', 
+                     no_hp = '$no_hp', 
+                     id_poli = $id_poli, 
+                     username = '$username' 
+                     WHERE id = $id";
         }
         
         if (!mysqli_query($koneksi, $query)) {
@@ -99,10 +109,7 @@ if (isset($_POST['edit'])) {
                 title: 'Berhasil!',
                 text: 'Data dokter berhasil diperbarui',
                 showConfirmButton: false,
-                timer: 1500,
-                timerProgressBar: true,
-                position: 'top-end',
-                toast: true
+                timer: 1500
             }).then(function() {
                 window.location.href = 'dokter.php';
             });
@@ -113,8 +120,7 @@ if (isset($_POST['edit'])) {
                 icon: 'error',
                 title: 'Oops...',
                 text: 'Gagal memperbarui data: " . $e->getMessage() . "',
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'OK'
+                confirmButtonColor: '#d33'
             });
         </script>";
     }

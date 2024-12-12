@@ -160,10 +160,6 @@
                             <h5 class="card-title">Pasien</h5>
                             <p class="card-text">Login sebagai pasien</p>
                             <a href="auth/login.php?role=pasien" class="btn btn-primary mb-2">Login Pasien</a>
-                            <div class="mt-2">
-                                <small class="text-muted">Belum punya akun?</small>
-                                <a href="auth/register.php" class="d-block btn btn-outline-primary mt-2">Daftar Pasien Baru</a>
-                            </div>
                         </div>
                     </div>
                 </div>
