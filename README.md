@@ -7,7 +7,6 @@ https://github.com/kaonangsigit/Poliklinik.git
 # change directory to Poliklinik 
 $ cd CC
 ```
-## Login
 # Login Admin
 ```sh
 # Username
