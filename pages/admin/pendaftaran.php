@@ -7,45 +7,70 @@ include_once("../../config/koneksi.php");
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Tambahkan fungsi untuk cek pendaftaran hari ini
+function cekPendaftaranHariIni($koneksi, $id_pasien) {
+    $query = "SELECT COUNT(*) as total FROM daftar_poli 
+             WHERE id_pasien = ? 
+             AND DATE(created_at) = CURDATE()";
+    
+    $stmt = $koneksi->prepare($query);
+    $stmt->bind_param("i", $id_pasien);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    
+    return $row['total'] > 0;
+}
+
 // Proses tambah data
 if (isset($_POST['tambah'])) {
     try {
         $id_pasien = $_POST['id_pasien'];
         $id_jadwal = $_POST['id_jadwal'];
         $keluhan = $_POST['keluhan'];
+        $is_admin = true; // Karena ini di halaman admin
+
+        // Cek apakah sudah mendaftar hari ini
+        if (!$is_admin && cekPendaftaranHariIni($koneksi, $id_pasien)) {
+            throw new Exception("Pasien sudah melakukan pendaftaran hari ini. Silakan kembali besok.");
+        }
+
+        // Generate nomor antrian
+        $query_antrian = "SELECT MAX(no_antrian) as last_antrian 
+                         FROM daftar_poli dp 
+                         JOIN jadwal_periksa jp ON dp.id_jadwal = jp.id
+                         WHERE jp.id = ? 
+                         AND DATE(dp.created_at) = CURDATE()";
         
-        // Query untuk menambahkan data pendaftaran
-        $query = "INSERT INTO daftar_poli (id_pasien, id_jadwal, keluhan, no_antrian, status) 
-                  VALUES (?, ?, ?, ?, 'menunggu')";
+        $stmt = $koneksi->prepare($query_antrian);
+        $stmt->bind_param("i", $id_jadwal);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        $no_antrian = ($row['last_antrian'] ?? 0) + 1;
+
+        // Insert data pendaftaran
+        $query = "INSERT INTO daftar_poli (id_pasien, id_jadwal, keluhan, no_antrian) 
+                 VALUES (?, ?, ?, ?)";
+        
         $stmt = $koneksi->prepare($query);
-        
-        // Hitung nomor antrian
-        $query_antrian = "SELECT MAX(no_antrian) as max_antrian FROM daftar_poli WHERE id_jadwal = ?";
-        $stmt_antrian = $koneksi->prepare($query_antrian);
-        $stmt_antrian->bind_param("i", $id_jadwal);
-        $stmt_antrian->execute();
-        $result_antrian = $stmt_antrian->get_result();
-        $row_antrian = $result_antrian->fetch_assoc();
-        $no_antrian = $row_antrian['max_antrian'] + 1;
-        
         $stmt->bind_param("iisi", $id_pasien, $id_jadwal, $keluhan, $no_antrian);
         
         if (!$stmt->execute()) {
-            throw new Exception($stmt->error);
+            throw new Exception("Gagal mendaftarkan pasien");
         }
-        
+
         echo "<script>
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: 'Data pendaftaran berhasil ditambahkan',
-                showConfirmButton: false,
-                timer: 1500,
-                timerProgressBar: true,
-                position: 'top-end',
-                toast: true
-            }).then(function() {
-                window.location = 'pendaftaran.php';
+                text: 'Pendaftaran berhasil dengan nomor antrian " . $no_antrian . "',
+                showConfirmButton: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'pendaftaran.php';
+                }
             });
         </script>";
     } catch (Exception $e) {
@@ -53,8 +78,8 @@ if (isset($_POST['tambah'])) {
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
-                text: 'Gagal menambahkan data: " . $e->getMessage() . "',
-                confirmButtonColor: '#d33'
+                text: '" . $e->getMessage() . "',
+                showConfirmButton: true
             });
         </script>";
     }

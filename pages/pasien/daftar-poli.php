@@ -9,142 +9,79 @@ $id_pasien = $_SESSION['user_id'];
 $query_poli = "SELECT * FROM poli ORDER BY nama_poli";
 $result_poli = mysqli_query($koneksi, $query_poli);
 
+// Tambahkan fungsi untuk cek pendaftaran hari ini
+function cekPendaftaranHariIni($koneksi, $id_pasien) {
+    $query = "SELECT COUNT(*) as total FROM daftar_poli 
+             WHERE id_pasien = ? 
+             AND DATE(created_at) = CURDATE()";
+    
+    $stmt = $koneksi->prepare($query);
+    $stmt->bind_param("i", $id_pasien);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    
+    return $row['total'] > 0;
+}
+
 // Proses pendaftaran poli
 if (isset($_POST['daftar'])) {
-    $id_jadwal = $_POST['id_jadwal'];
-    $keluhan = mysqli_real_escape_string($koneksi, $_POST['keluhan']);
-    
-    // Cek status jadwal
-    $check_jadwal = "SELECT status FROM jadwal_periksa WHERE id = '$id_jadwal'";
-    $result_jadwal = mysqli_query($koneksi, $check_jadwal);
-    $jadwal = mysqli_fetch_assoc($result_jadwal);
-    
-    if (!$jadwal || $jadwal['status'] !== 'aktif') {
-        echo "<script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Jadwal Tidak Tersedia',
-                text: 'Jadwal yang Anda pilih tidak aktif atau tidak tersedia.',
-                confirmButtonColor: '#3085d6'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href='daftar-poli.php';
-                }
-            });
-        </script>";
-        exit;
-    }
-    
-    // Cek apakah pasien sudah mendaftar di poli manapun hari ini
-    $check_today_query = "SELECT dp.*, p.nama_poli 
-                         FROM daftar_poli dp
+    try {
+        $id_pasien = $_SESSION['user_id']; // ID pasien yang sedang login
+        $id_jadwal = $_POST['id_jadwal'];
+        $keluhan = $_POST['keluhan'];
+        $is_admin = false; // Karena ini di halaman pasien
+
+        // Cek apakah sudah mendaftar hari ini
+        if (cekPendaftaranHariIni($koneksi, $id_pasien)) {
+            throw new Exception("Anda sudah melakukan pendaftaran hari ini. Silakan kembali besok atau hubungi admin untuk bantuan.");
+        }
+
+        // Generate nomor antrian
+        $query_antrian = "SELECT MAX(no_antrian) as last_antrian 
+                         FROM daftar_poli dp 
                          JOIN jadwal_periksa jp ON dp.id_jadwal = jp.id
-                         JOIN dokter d ON jp.id_dokter = d.id
-                         JOIN poli p ON d.id_poli = p.id
-                         WHERE dp.id_pasien = '$id_pasien' 
+                         WHERE jp.id = ? 
                          AND DATE(dp.created_at) = CURDATE()";
-    $check_today_result = mysqli_query($koneksi, $check_today_query);
-    
-    if (mysqli_num_rows($check_today_result) > 0) {
-        $poli_data = mysqli_fetch_assoc($check_today_result);
-        echo "<script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'Tidak Dapat Mendaftar',
-                text: 'Anda sudah mendaftar di poli " . $poli_data['nama_poli'] . " untuk hari ini! Tidak dapat mendaftar di poli lain pada hari yang sama.',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#3085d6'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href='daftar-poli.php';
-                }
-            });
-        </script>";
-        exit;
-    }
-    
-    // Cek apakah sudah pernah mendaftar di jadwal yang sama
-    $check_query = "SELECT * FROM daftar_poli 
-                   WHERE id_pasien = '$id_pasien' 
-                   AND id_jadwal = '$id_jadwal'
-                   AND DATE(created_at) = CURDATE()";
-    $check_result = mysqli_query($koneksi, $check_query);
-    
-    // Cek status pendaftaran terakhir
-    $status_query = "SELECT status FROM daftar_poli 
-                    WHERE id_pasien = '$id_pasien' 
-                    AND id_jadwal = '$id_jadwal'
-                    AND status = 'menunggu'
-                    ORDER BY created_at DESC LIMIT 1";
-    $status_result = mysqli_query($koneksi, $status_query);
-    $status_data = mysqli_fetch_assoc($status_result);
-    
-    if (mysqli_num_rows($check_result) > 0) {
-        echo "<script>
-            Swal.fire({
-                icon: 'info',
-                title: 'Sudah Terdaftar',
-                text: 'Anda sudah mendaftar pada poli ini untuk hari ini!',
-                confirmButtonColor: '#3085d6'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href='daftar-poli.php';
-                }
-            });
-        </script>";
-    } else if ($status_data && $status_data['status'] == 'menunggu') {
-        echo "<script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'Pendaftaran Belum Selesai',
-                text: 'Anda masih memiliki pendaftaran yang belum selesai di poli ini!',
-                confirmButtonColor: '#3085d6'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href='daftar-poli.php';
-                }
-            });
-        </script>";
-    }
-    
-    // Ambil nomor antrian terakhir untuk hari ini
-    $query_antrian = "SELECT MAX(no_antrian) as max_antrian 
-                     FROM daftar_poli 
-                     WHERE id_jadwal = '$id_jadwal'
-                     AND DATE(created_at) = CURDATE()";
-    $result_antrian = mysqli_query($koneksi, $query_antrian);
-    $data_antrian = mysqli_fetch_assoc($result_antrian);
-    $no_antrian = ($data_antrian['max_antrian'] ?? 0) + 1;
-    
-    // Insert data pendaftaran baru
-    $query = "INSERT INTO daftar_poli (id_pasien, id_jadwal, keluhan, no_antrian, status) 
-             VALUES ('$id_pasien', '$id_jadwal', '$keluhan', '$no_antrian', 'menunggu')";
-             
-    if(mysqli_query($koneksi, $query)) {
+        
+        $stmt = $koneksi->prepare($query_antrian);
+        $stmt->bind_param("i", $id_jadwal);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        $no_antrian = ($row['last_antrian'] ?? 0) + 1;
+
+        // Insert data pendaftaran
+        $query = "INSERT INTO daftar_poli (id_pasien, id_jadwal, keluhan, no_antrian) 
+                 VALUES (?, ?, ?, ?)";
+        
+        $stmt = $koneksi->prepare($query);
+        $stmt->bind_param("iisi", $id_pasien, $id_jadwal, $keluhan, $no_antrian);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Gagal melakukan pendaftaran");
+        }
+
         echo "<script>
             Swal.fire({
                 icon: 'success',
-                title: 'Pendaftaran Berhasil!',
-                text: 'Anda telah berhasil mendaftar ke poli.',
-                confirmButtonColor: '#3085d6'
+                title: 'Berhasil!',
+                text: 'Pendaftaran berhasil dengan nomor antrian " . $no_antrian . "',
+                showConfirmButton: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href='index.php';
+                    window.location.href = 'index.php';
                 }
             });
         </script>";
-        exit();
-    } else {
+    } catch (Exception $e) {
         echo "<script>
             Swal.fire({
                 icon: 'error',
-                title: 'Gagal!',
-                text: 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.',
-                confirmButtonColor: '#3085d6'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href='daftar-poli.php';
-                }
+                title: 'Oops...',
+                text: '" . $e->getMessage() . "',
+                showConfirmButton: true
             });
         </script>";
     }

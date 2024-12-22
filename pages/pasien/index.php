@@ -43,38 +43,38 @@ if(isset($_POST['batalkan'])) {
                 confirmButtonColor: '#d33'
             });
         </script>";
-        exit();
-    }
-    
-    // Jika status masih 'menunggu', proses pembatalan
-    $query_batal = "DELETE FROM daftar_poli 
-                    WHERE id = '$id_daftar' 
-                    AND id_pasien = '$id_pasien' 
-                    AND status = 'menunggu'";
-    
-    if(mysqli_query($koneksi, $query_batal)) {
-        echo "<script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: 'Pendaftaran berhasil dibatalkan',
-                showConfirmButton: false,
-                timer: 1500
-            }).then(() => {
-                window.location.href = 'index.php';
-            });
-        </script>";
     } else {
-        echo "<script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal!',
-                text: 'Terjadi kesalahan saat membatalkan pendaftaran',
-                confirmButtonColor: '#d33'
-            });
-        </script>";
+        // Jika status masih 'menunggu', proses pembatalan
+        $query_batal = "DELETE FROM daftar_poli 
+                        WHERE id = '$id_daftar' 
+                        AND id_pasien = '$id_pasien' 
+                        AND status = 'menunggu'";
+        
+        if(mysqli_query($koneksi, $query_batal)) {
+            echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Pendaftaran berhasil dibatalkan',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = 'index.php';
+                    });
+                });
+            </script>";
+        } else {
+            echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat membatalkan pendaftaran',
+                    confirmButtonColor: '#d33'
+                });
+            </script>";
+        }
     }
-    exit();
 }
 ?>
 
@@ -272,10 +272,10 @@ function konfirmasiBatal(id) {
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ya, batalkan!',
-        cancelButtonText: 'Tidak'
+        cancelButtonText: 'Tidak',
+        allowOutsideClick: false
     }).then((result) => {
         if (result.isConfirmed) {
-            // Submit form pembatalan
             let form = document.createElement('form');
             form.method = 'POST';
             form.innerHTML = `
@@ -287,6 +287,14 @@ function konfirmasiBatal(id) {
         }
     });
 }
+
+// Pastikan SweetAlert tidak mempengaruhi layout sidebar
+document.addEventListener('DOMContentLoaded', function() {
+    const swalOverlay = document.querySelector('.swal2-container');
+    if (swalOverlay) {
+        swalOverlay.style.zIndex = '9999';
+    }
+});
 
 // Tampilkan SweetAlert2 jika ada pesan sukses dari pendaftaran
 <?php if(isset($_SESSION['daftar_sukses'])) { ?>
