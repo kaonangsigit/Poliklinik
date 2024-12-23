@@ -8,32 +8,24 @@ $id_dokter = $_SESSION['user_id'];
 // Set tanggal default ke hari ini jika tidak ada tanggal yang dipilih
 $selected_date = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
 
-// Query untuk mengambil riwayat pasien berdasarkan tanggal
+// Modifikasi query untuk mengelompokkan berdasarkan pasien
 $query = "SELECT 
             p.nama as nama_pasien,
             p.no_rm,
-            dp.keluhan,
-            dp.no_antrian,
-            dp.status,
-            pr.id as id_periksa,
-            pr.tgl_periksa,
-            pr.catatan,
-            pr.biaya_periksa,
-            150000 as jasa_dokter,
-            COALESCE(SUM(o.harga), 0) as total_obat
+            p.id as id_pasien,
+            COUNT(DISTINCT pr.id) as jumlah_kunjungan,
+            MAX(COALESCE(pr.tgl_periksa, dp.created_at)) as terakhir_periksa,
+            dp.status
           FROM daftar_poli dp
           JOIN jadwal_periksa jp ON dp.id_jadwal = jp.id
           JOIN pasien p ON dp.id_pasien = p.id
           LEFT JOIN periksa pr ON dp.id = pr.id_daftar_poli
-          LEFT JOIN detail_periksa dpr ON pr.id = dpr.id_periksa
-          LEFT JOIN obat o ON dpr.id_obat = o.id
           WHERE jp.id_dokter = ?
-          AND DATE(COALESCE(pr.tgl_periksa, dp.created_at)) = ?
-          GROUP BY dp.id
-          ORDER BY dp.status ASC, pr.tgl_periksa DESC";
+          GROUP BY p.id
+          ORDER BY terakhir_periksa DESC";
 
 $stmt = mysqli_prepare($koneksi, $query);
-mysqli_stmt_bind_param($stmt, "is", $id_dokter, $selected_date);
+mysqli_stmt_bind_param($stmt, "i", $id_dokter);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 ?>
@@ -70,17 +62,17 @@ $result = mysqli_stmt_get_result($stmt);
             <!-- Tabel Riwayat -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Riwayat Pasien Tanggal: <?php echo date('d/m/Y', strtotime($selected_date)); ?></h3>
+                    <h3 class="card-title">Riwayat Pasien</h3>
                 </div>
                 <div class="card-body">
-                    <?php if(mysqli_num_rows($result) > 0): ?>
-                    <table id="tabelRiwayat" class="table table-bordered table-hover">
+                    <table class="table table-bordered table-hover" id="tabelRiwayat">
                         <thead>
                             <tr>
                                 <th width="5%">No</th>
-                                <th width="20%">No RM</th>
-                                <th width="45%">Nama Pasien</th>
-                                <th width="15%">Status</th>
+                                <th width="15%">No RM</th>
+                                <th width="30%">Nama Pasien</th>
+                                <th width="15%">Jumlah Kunjungan</th>
+                                <th width="20%">Terakhir Periksa</th>
                                 <th width="15%">Aksi</th>
                             </tr>
                         </thead>
@@ -93,91 +85,53 @@ $result = mysqli_stmt_get_result($stmt);
                                 <td class="text-center"><?php echo $no++; ?></td>
                                 <td><?php echo $row['no_rm']; ?></td>
                                 <td><?php echo $row['nama_pasien']; ?></td>
+                                <td class="text-center"><?php echo $row['jumlah_kunjungan']; ?> kali</td>
                                 <td class="text-center">
-                                    <span class="badge badge-<?php 
-                                        echo $row['status'] == 'menunggu' ? 'warning' : 
-                                            ($row['status'] == 'diperiksa' ? 'primary' : 'success'); 
-                                    ?>">
-                                        <?php echo ucfirst($row['status']); ?>
-                                    </span>
+                                    <?php echo date('d/m/Y', strtotime($row['terakhir_periksa'])); ?>
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-info btn-sm" 
-                                            onclick="showDetail(<?php echo $row['id_periksa']; ?>)">
-                                        <i class="fas fa-info-circle"></i> Detail
+                                            onclick="showRiwayatDetail(<?php echo $row['id_pasien']; ?>)">
+                                        <i class="fas fa-history"></i> Riwayat
                                     </button>
                                 </td>
                             </tr>
                             <?php } ?>
                         </tbody>
                     </table>
-                    <?php else: ?>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Tidak ada riwayat pasien untuk tanggal yang dipilih.
-                    </div>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </section>
 </div>
 
-<!-- Modal Container -->
-<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+<!-- Modal Detail Riwayat -->
+<div class="modal fade" id="detailModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-info">
-                <h5 class="modal-title text-white" id="detailModalLabel">
-                    <i class="fas fa-info-circle mr-2"></i>Detail Pasien
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-history mr-2"></i>Riwayat Kunjungan Pasien
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Data detail akan dimuat di sini -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <div id="riwayatDetail"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-$(document).ready(function() {
-    if ($.fn.DataTable.isDataTable('#tabelRiwayat')) {
-        $('#tabelRiwayat').DataTable().destroy();
-    }
-    
-    $('#tabelRiwayat').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
-        },
-        "order": [[1, 'asc']], // Urutkan berdasarkan waktu
-        "columnDefs": [
-            {
-                "targets": [4, 5, 6],
-                "orderable": false
-            }
-        ]
-    });
-});
-
-function showDetail(id_periksa) {
+function showRiwayatDetail(id_pasien) {
     $.ajax({
-        url: 'get_detail_pasien.php',
+        url: 'get_riwayat_detail.php',
         type: 'POST',
-        data: {id_periksa: id_periksa},
+        data: {id_pasien: id_pasien},
         success: function(response) {
-            $('#detailModal .modal-body').html(response);
+            $('#riwayatDetail').html(response);
             $('#detailModal').modal('show');
         },
         error: function() {
@@ -190,9 +144,35 @@ function showDetail(id_periksa) {
     });
 }
 
-// Tambahkan ini untuk membersihkan modal saat ditutup
+// Perbaikan inisialisasi DataTable
+var tabelRiwayat;
+$(document).ready(function() {
+    // Destroy jika sudah ada
+    if ($.fn.DataTable.isDataTable('#tabelRiwayat')) {
+        $('#tabelRiwayat').DataTable().destroy();
+    }
+    
+    // Inisialisasi baru
+    tabelRiwayat = $('#tabelRiwayat').DataTable({
+        "responsive": true,
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
+        },
+        "order": [[4, "desc"]], // Urutkan berdasarkan tanggal terakhir periksa
+        "columnDefs": [
+            {
+                "targets": [0, 3, 4, 5], // Kolom nomor, jumlah kunjungan, tanggal, dan aksi
+                "orderable": false
+            }
+        ]
+    });
+});
+
+// Refresh DataTable saat modal ditutup (jika diperlukan)
 $('#detailModal').on('hidden.bs.modal', function () {
-    $(this).find('.modal-body').html('');
+    if (tabelRiwayat) {
+        tabelRiwayat.ajax.reload(null, false);
+    }
 });
 </script>
 

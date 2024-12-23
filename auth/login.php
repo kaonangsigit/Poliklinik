@@ -226,6 +226,48 @@ $roleTitle = ucfirst($role);
             color: #1976d2;
             text-decoration: underline;
         }
+
+        /* Responsive styling untuk mobile */
+        @media (max-width: 768px) {
+            .login-box {
+                width: 90% !important;
+                margin: 20px auto !important;
+            }
+
+            .login-card-body {
+                padding: 15px !important;
+            }
+
+            .input-group {
+                margin-bottom: 15px !important;
+            }
+
+            .btn-primary {
+                width: 100% !important;
+                padding: 12px !important;
+            }
+
+            .form-control {
+                height: 45px !important;
+                font-size: 16px !important; /* Ukuran font yang lebih besar untuk mobile */
+            }
+
+            .login-logo {
+                font-size: 24px !important;
+                margin-bottom: 15px !important;
+            }
+
+            .login-box-msg {
+                font-size: 14px !important;
+            }
+
+            /* Perbaikan untuk input pada iOS */
+            input[type="text"],
+            input[type="password"] {
+                -webkit-appearance: none;
+                border-radius: 8px !important;
+            }
+        }
     </style>
 </head>
 <body class="hold-transition login-page">

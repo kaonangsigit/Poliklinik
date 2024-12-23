@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Waktu pembuatan: 22 Des 2024 pada 17.12
+-- Waktu pembuatan: 23 Des 2024 pada 19.50
 -- Versi server: 10.4.21-MariaDB
 -- Versi PHP: 8.0.19
 
@@ -51,7 +51,11 @@ INSERT INTO `daftar_poli` (`id`, `id_pasien`, `id_jadwal`, `keluhan`, `no_antria
 (54, 19, 11, 'Sakit', 1, 'selesai', '2024-12-08 20:14:23', '2024-12-22 16:04:01'),
 (55, 33, 9, 'Sakit', 1, 'selesai', '2024-12-08 20:40:57', '2024-12-22 15:36:23'),
 (70, 30, 11, 'sakit', 1, 'selesai', '2024-12-22 15:23:12', '2024-12-22 15:36:23'),
-(71, 36, 10, 'sakit demam', 1, 'menunggu', '2024-12-22 15:38:52', '2024-12-22 15:38:52');
+(76, 30, 11, 'oy', 4, 'selesai', '2024-12-22 16:47:09', '2024-12-22 16:55:19'),
+(78, 36, 11, 'x', 5, 'selesai', '2024-12-22 17:01:10', '2024-12-22 17:01:56'),
+(99, 39, 11, 'sakit', 6, 'selesai', '2024-12-23 06:12:10', '2024-12-23 06:13:05'),
+(100, 30, 11, 'sakit', 7, 'selesai', '2024-12-23 06:14:15', '2024-12-23 06:14:34'),
+(101, 40, 11, 'sakit', 8, 'selesai', '2024-12-23 06:30:10', '2024-12-23 06:30:55');
 
 -- --------------------------------------------------------
 
@@ -70,7 +74,10 @@ CREATE TABLE `detail_periksa` (
 --
 
 INSERT INTO `detail_periksa` (`id`, `id_periksa`, `id_obat`) VALUES
-(1, 10, 13);
+(1, 10, 13),
+(2, 15, 3),
+(3, 16, 3),
+(4, 17, 3);
 
 -- --------------------------------------------------------
 
@@ -95,7 +102,7 @@ CREATE TABLE `dokter` (
 INSERT INTO `dokter` (`id`, `nama`, `alamat`, `no_hp`, `id_poli`, `username`, `password`) VALUES
 (15, 'Amel', 'semarang', '0812347454545', 10, 'dr.amel', '$2y$10$EbyXDF0SxjSvOMh6tViiZuR0kRLn5AsgSlpWvmGMR1CjdNee5or0m'),
 (16, 'Konang', 'semarang', '02312313123', 6, 'dr.konang', '$2y$10$OukYzRzp3.it5uJXc5HHvedRN8e083INC87PucmTJc0s8V95Xuvq6'),
-(21, 'Ifan', 'Semarang', '0812346567567', 8, 'Ifan', '$2y$10$w3uUFnaurY0drPE7EQUxo.bELRWCEkjexix7MiVj9d2UCVyeGA5HC'),
+(21, 'Ifan', 'Semarang', '0812346567550', 8, 'Ifan', '$2y$10$jx/qQiPXS7DwyHjUV2UNyeFdh7SSQsABLm9tlTLfsSsp8vXCBi5au'),
 (23, 'adrian', 'Semarang', '0812346567567', 12, 'adrian', '$2y$10$9eIb6eeJ6Wbkudv0KaXGJ.Az/qdEDwddX6S1X8hICzHAxW/TPtUem');
 
 -- --------------------------------------------------------
@@ -121,7 +128,8 @@ INSERT INTO `jadwal_periksa` (`id`, `id_dokter`, `hari`, `jam_mulai`, `jam_seles
 (8, 15, 'Selasa', '08:00:00', '12:00:00', 'aktif'),
 (9, 16, 'Senin', '08:00:00', '12:00:00', 'aktif'),
 (10, 23, 'Kamis', '08:00:00', '12:00:00', 'aktif'),
-(11, 21, 'Jumat', '07:00:00', '12:00:00', 'aktif');
+(11, 21, 'Rabu', '10:00:00', '13:00:00', 'aktif'),
+(13, 21, 'Jumat', '10:00:00', '13:00:00', 'aktif');
 
 -- --------------------------------------------------------
 
@@ -173,7 +181,10 @@ INSERT INTO `pasien` (`id`, `nama`, `alamat`, `no_ktp`, `no_hp`, `no_rm`, `usern
 (30, 'Adi', 'Semarang', '1111111111111114', '083424234234', '202412-005', 'Adi', '$2y$10$xuAD.jd/X2gK287DPd5qRO9WS0E3w8Jg6XP6hO6mh1kh5EZ/KA9DS'),
 (31, 'Ali', 'Semarang', '1111111111111115', '034234324342', '202412-006', 'Ali', '$2y$10$E0GsSHroE6vUXrFRtkS2tuhBt8KGntiDaXJvI9d39slJlAaCLAF0K'),
 (33, 'Aldin', 'Semarang ', '1111111111111116', '081343244533', '202412-007', 'Aldin ', '$2y$10$88GoEBKhz1fhfz7eX/Cxvu1GeGKd9DiJTnZOS0r0.t2o8SeJApSOq'),
-(36, 'Aska', 'Semaratng', '1111111111111120', '08231232323', '202412-008', 'Aska', '$2y$10$TFCNN0DrCRbvncLNUAsqee1N.E3JmmXA.25zXA5b1n0DX30jR9tGy');
+(36, 'Aska', 'Semaratng', '1111111111111120', '08231232323', '202412-008', 'Aska', '$2y$10$TFCNN0DrCRbvncLNUAsqee1N.E3JmmXA.25zXA5b1n0DX30jR9tGy'),
+(38, 'x', 'x', '1111111111111222', '0832321323123', '202412-009', 'x', '$2y$10$P3HsndRiv0kufqbJ1RB5sOMxR4KJvilrj5ujyudnYTeEBb0qBlhYC'),
+(39, 'y', 'semarang', '1111111111111123', '0812123321321', '202412-010', 'y', '$2y$10$/QnjUTdvRHEoSRt/Vg/PLeHRsPe439tnFstAVHpT6af56hFm2hTW6'),
+(40, 'nando', 'semarang', '1111111111111456', '0983213213213', '202412-011', 'nando', '$2y$10$GkLCGKuwHeUt/Xe/hkk.8.xb6m7fv8IIjR4t1zwveV5nA8snrA/jK');
 
 -- --------------------------------------------------------
 
@@ -199,7 +210,12 @@ INSERT INTO `periksa` (`id`, `id_daftar_poli`, `tgl_periksa`, `catatan`, `biaya_
 (9, 45, '2024-12-06 00:26:38', 'sipa', 150000),
 (10, 55, '2024-12-08 21:54:48', 'diminum 2kali sehari', 155000),
 (11, 70, '2024-12-22 16:24:00', 'kotoran', 150000),
-(12, 54, '2024-12-22 17:04:01', 'kotoran', 150000);
+(12, 54, '2024-12-22 17:04:01', 'kotoran', 150000),
+(13, 76, '2024-12-22 17:55:47', 'kotoran', 150000),
+(14, 78, '2024-12-22 18:01:56', 'x', 150000),
+(15, 99, '2024-12-23 07:13:05', 'contoh', 175000),
+(16, 100, '2024-12-23 07:14:34', 'sakit', 175000),
+(17, 101, '2024-12-23 07:30:55', 'sakit', 175000);
 
 -- --------------------------------------------------------
 
@@ -319,13 +335,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT untuk tabel `daftar_poli`
 --
 ALTER TABLE `daftar_poli`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_periksa`
 --
 ALTER TABLE `detail_periksa`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT untuk tabel `dokter`
@@ -337,7 +353,7 @@ ALTER TABLE `dokter`
 -- AUTO_INCREMENT untuk tabel `jadwal_periksa`
 --
 ALTER TABLE `jadwal_periksa`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT untuk tabel `obat`
@@ -349,13 +365,13 @@ ALTER TABLE `obat`
 -- AUTO_INCREMENT untuk tabel `pasien`
 --
 ALTER TABLE `pasien`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT untuk tabel `periksa`
 --
 ALTER TABLE `periksa`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT untuk tabel `poli`

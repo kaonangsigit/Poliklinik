@@ -51,7 +51,7 @@ if (isset($_POST['register'])) {
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Poliklinik | Registrasi Pasien</title>
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -139,6 +139,69 @@ if (isset($_POST['register'])) {
         .login-link a:hover {
             color: #1976d2;
             text-decoration: underline;
+        }
+        /* Responsive styling untuk mobile */
+        @media (max-width: 768px) {
+            .register-box {
+                width: 90% !important;
+                margin: 20px auto !important;
+            }
+
+            .register-card-body {
+                padding: 15px !important;
+            }
+
+            .input-group {
+                margin-bottom: 15px !important;
+            }
+
+            .form-control {
+                height: 45px !important;
+                font-size: 16px !important;
+            }
+
+            .btn-primary {
+                width: 100% !important;
+                padding: 12px !important;
+            }
+
+            .register-logo {
+                font-size: 24px !important;
+                margin-bottom: 15px !important;
+            }
+
+            .register-box-msg {
+                font-size: 14px !important;
+            }
+
+            /* Perbaikan untuk textarea */
+            textarea.form-control {
+                height: auto !important;
+            }
+
+            /* Perbaikan untuk input pada iOS */
+            input[type="text"],
+            input[type="password"],
+            input[type="tel"],
+            textarea {
+                -webkit-appearance: none;
+                border-radius: 8px !important;
+            }
+        }
+
+        /* Tambahan untuk memperbaiki tampilan pada layar sangat kecil */
+        @media (max-width: 320px) {
+            .register-box {
+                margin: 10px auto !important;
+            }
+
+            .form-control {
+                font-size: 14px !important;
+            }
+
+            .btn {
+                font-size: 14px !important;
+            }
         }
     </style>
 </head>
