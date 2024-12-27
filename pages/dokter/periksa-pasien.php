@@ -155,6 +155,36 @@ if(isset($_POST['periksa'])) {
     transform: none !important;
     box-shadow: none !important;
 }
+
+.obat-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.obat-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.obat-item:last-child {
+    border-bottom: none;
+}
+
+.obat-item:hover {
+    background-color: #f8f9fa;
+}
+
+.obat-item label {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.card-body p {
+    margin-bottom: 10px;
+}
 </style>
 
 <script>
@@ -289,35 +319,39 @@ $(document).ready(function() {
                                                     <div class="modal-body">
                                                         <input type="hidden" name="id_daftar_poli" value="<?php echo $row['id']; ?>">
                                                         
-                                                        <!-- Form Catatan -->
+                                                        <!-- Catatan Pemeriksaan -->
                                                         <div class="form-group">
                                                             <label>Catatan Pemeriksaan</label>
                                                             <textarea class="form-control" name="catatan" rows="3" required></textarea>
                                                         </div>
 
-                                                        <!-- Form Pilih Obat -->
+                                                        <!-- Daftar Obat dengan Checkbox -->
                                                         <div class="form-group">
-                                                            <label>Pilih Obat (Opsional)</label>
-                                                            <select class="form-control select2" name="obat[]" multiple 
-                                                                    id="obat<?php echo $row['id']; ?>" 
-                                                                    onchange="hitungTotal(<?php echo $row['id']; ?>)">
+                                                            <label>Pilih Obat</label>
+                                                            <div class="obat-container">
                                                                 <?php
                                                                 $query_obat = "SELECT * FROM obat ORDER BY nama_obat";
                                                                 $result_obat = mysqli_query($koneksi, $query_obat);
                                                                 while($obat = mysqli_fetch_assoc($result_obat)) {
-                                                                    echo "<option value='" . $obat['id'] . "' 
-                                                                           data-harga='" . $obat['harga'] . "'>" . 
-                                                                           $obat['nama_obat'] . " - Rp " . 
-                                                                           number_format($obat['harga'], 0, ',', '.') . 
-                                                                           "</option>";
+                                                                ?>
+                                                                    <div class="obat-item">
+                                                                        <input type="checkbox" 
+                                                                               class="obat-checkbox" 
+                                                                               name="obat[]" 
+                                                                               value="<?php echo $obat['id']; ?>"
+                                                                               data-harga="<?php echo $obat['harga']; ?>"
+                                                                               id="obat<?php echo $obat['id']; ?>">
+                                                                        <label for="obat<?php echo $obat['id']; ?>">
+                                                                            <?php echo $obat['nama_obat']; ?> - 
+                                                                            Rp <?php echo number_format($obat['harga'], 0, ',', '.'); ?>
+                                                                        </label>
+                                                                    </div>
+                                                                <?php
                                                                 }
                                                                 ?>
-                                                            </select>
-                                                            <small class="form-text text-muted">
-                                                                *Biarkan kosong jika tidak ada obat yang diperlukan
-                                                            </small>
+                                                            </div>
                                                         </div>
-                                                        
+
                                                         <!-- Ringkasan Biaya -->
                                                         <div class="card mt-3">
                                                             <div class="card-header">
@@ -325,23 +359,23 @@ $(document).ready(function() {
                                                             </div>
                                                             <div class="card-body">
                                                                 <div class="row">
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-8">
                                                                         <p>Biaya Jasa Dokter:</p>
                                                                         <p>Total Biaya Obat:</p>
-                                                                        <h5>Total Keseluruhan:</h5>
+                                                                        <h5 class="mt-2">Total Keseluruhan:</h5>
                                                                     </div>
-                                                                    <div class="col-md-6 text-right">
+                                                                    <div class="col-md-4 text-right">
                                                                         <p>Rp 150.000</p>
-                                                                        <p id="totalObat<?php echo $row['id']; ?>">Rp 0</p>
-                                                                        <h5 id="totalKeseluruhan<?php echo $row['id']; ?>">Rp 150.000</h5>
+                                                                        <p id="totalBiayaObat">Rp 0</p>
+                                                                        <h5 class="mt-2" id="totalKeseluruhan">Rp 150.000</h5>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
                                                         <button type="submit" name="periksa" class="btn btn-primary">Simpan & Selesai</button>
-                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -609,6 +643,31 @@ $(document).ready(function() {
     // Set interval untuk auto reload setiap 30 detik
     setInterval(updateData, 30000);
 });
+</script>
+
+<script>
+$(document).ready(function() {
+    // Event handler untuk checkbox obat
+    $('.obat-checkbox').on('change', function() {
+        updateTotal();
+    });
+});
+
+function updateTotal() {
+    const biayaDokter = 150000;
+    let totalObat = 0;
+    
+    // Hitung total dari obat yang dicentang
+    $('.obat-checkbox:checked').each(function() {
+        totalObat += parseInt($(this).data('harga'));
+    });
+
+    const totalKeseluruhan = biayaDokter + totalObat;
+    
+    // Update tampilan
+    $('#totalBiayaObat').text('Rp ' + totalObat.toLocaleString('id-ID'));
+    $('#totalKeseluruhan').text('Rp ' + totalKeseluruhan.toLocaleString('id-ID'));
+}
 </script>
 
 <?php include_once("layouts/footer.php"); ?> 

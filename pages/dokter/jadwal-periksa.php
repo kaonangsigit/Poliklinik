@@ -106,6 +106,61 @@ if(isset($_POST['submit'])) {
     }
 }
 
+// Proses edit jadwal
+if(isset($_POST['edit_jadwal'])) {
+    $id_jadwal = $_POST['id_jadwal'];
+    $hari = $_POST['hari'];
+    $jam_mulai = $_POST['jam_mulai'];
+    $jam_selesai = $_POST['jam_selesai'];
+    $id_dokter = $_SESSION['user_id'];
+    
+    try {
+        // Validasi jam
+        if($jam_mulai >= $jam_selesai) {
+            throw new Exception("Jam selesai harus lebih besar dari jam mulai!");
+        }
+        
+        // Update jadwal
+        $query_update = "UPDATE jadwal_periksa 
+                        SET hari = ?, 
+                            jam_mulai = ?, 
+                            jam_selesai = ? 
+                        WHERE id = ? 
+                        AND id_dokter = ?";
+                        
+        $stmt_update = mysqli_prepare($koneksi, $query_update);
+        mysqli_stmt_bind_param($stmt_update, "sssii", 
+                             $hari, $jam_mulai, $jam_selesai, 
+                             $id_jadwal, $id_dokter);
+        
+        if(mysqli_stmt_execute($stmt_update)) {
+            echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Jadwal berhasil diperbarui!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(function() {
+                    window.location.href = 'jadwal-periksa.php';
+                });
+            </script>";
+        } else {
+            throw new Exception("Gagal mengupdate jadwal!");
+        }
+        
+    } catch (Exception $e) {
+        echo "<script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '" . $e->getMessage() . "',
+                showConfirmButton: true
+            });
+        </script>";
+    }
+}
+
 // Ambil jadwal dokter
 $query = "SELECT * FROM jadwal_periksa 
           WHERE id_dokter = ? 
@@ -174,11 +229,6 @@ $result = mysqli_stmt_get_result($stmt);
                                             onclick='editJadwal(<?php echo json_encode($row); ?>)'>
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
-                                    <a href="hapus-jadwal.php?id=<?php echo $row['id']; ?>" 
-                                       class="btn btn-danger btn-sm" 
-                                       onclick="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?');">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
                                 </td>
                             </tr>
                             <?php } ?>
@@ -196,13 +246,16 @@ $result = mysqli_stmt_get_result($stmt);
         <div class="modal-content">
             <form method="post" id="formJadwal">
                 <div class="modal-header">
-                    <h4 class="modal-title">Tambah Jadwal Periksa</h4>
+                    <h4 class="modal-title"></h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <!-- Hidden input untuk ID jadwal -->
+                    <input type="hidden" name="id_jadwal" id="id_jadwal">
+                    
                     <div class="form-group">
                         <label>Hari</label>
-                        <select class="form-control" name="hari" required>
+                        <select class="form-control" name="hari" id="hari" required>
                             <option value="Senin">Senin</option>
                             <option value="Selasa">Selasa</option>
                             <option value="Rabu">Rabu</option>
@@ -213,16 +266,16 @@ $result = mysqli_stmt_get_result($stmt);
                     </div>
                     <div class="form-group">
                         <label>Jam Mulai</label>
-                        <input type="time" class="form-control" name="jam_mulai" required>
+                        <input type="time" class="form-control" name="jam_mulai" id="jam_mulai" required>
                     </div>
                     <div class="form-group">
                         <label>Jam Selesai</label>
-                        <input type="time" class="form-control" name="jam_selesai" required>
+                        <input type="time" class="form-control" name="jam_selesai" id="jam_selesai" required>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                    <button type="submit" name="submit" class="btn btn-primary">Simpan</button>
+                    <button type="submit" class="btn btn-primary" id="btnSimpan">Simpan</button>
                 </div>
             </form>
         </div>
@@ -230,6 +283,59 @@ $result = mysqli_stmt_get_result($stmt);
 </div>
 
 <script>
+$(document).ready(function() {
+    // Reset form saat modal dibuka untuk tambah baru
+    $('.btn-tambah').click(function() {
+        $('#modalJadwal').modal('show');
+        $('#formJadwal')[0].reset();
+        $('.modal-title').text('Tambah Jadwal Periksa');
+        $('#btnSimpan').text('Simpan');
+        $('#formJadwal').attr('action', '');
+        $('#formJadwal').append('<input type="hidden" name="submit" value="1">');
+        $('#id_jadwal').val('');
+    });
+
+    // Fungsi edit jadwal
+    window.editJadwal = function(data) {
+        $('#modalJadwal').modal('show');
+        $('.modal-title').text('Edit Jadwal Periksa');
+        $('#btnSimpan').text('Update');
+        
+        // Hapus input hidden submit jika ada
+        $('input[name="submit"]').remove();
+        
+        // Tambahkan input hidden untuk edit
+        $('#formJadwal').append('<input type="hidden" name="edit_jadwal" value="1">');
+        
+        // Set nilai form
+        $('#id_jadwal').val(data.id);
+        $('#hari').val(data.hari);
+        $('#jam_mulai').val(data.jam_mulai.substr(0, 5));
+        $('#jam_selesai').val(data.jam_selesai.substr(0, 5));
+    }
+
+    // Validasi form sebelum submit
+    $('#formJadwal').on('submit', function(e) {
+        e.preventDefault();
+        
+        const jamMulai = $('#jam_mulai').val();
+        const jamSelesai = $('#jam_selesai').val();
+        
+        if (jamMulai >= jamSelesai) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Jam selesai harus lebih besar dari jam mulai!',
+                showConfirmButton: true
+            });
+            return false;
+        }
+
+        // Submit form jika validasi berhasil
+        this.submit();
+    });
+});
+
 // Update status jadwal
 $('.status-jadwal').change(function() {
     const jadwal_id = $(this).data('id');
@@ -251,41 +357,6 @@ $('.status-jadwal').change(function() {
                 showConfirmButton: false,
                 timer: 1500
             });
-        }
-    });
-});
-
-// Fungsi edit jadwal
-function editJadwal(data) {
-    $('#modalJadwal').modal('show');
-    $('#jadwal_id').val(data.id);
-    $('#hari').val(data.hari);
-    $('#jam_mulai').val(data.jam_mulai);
-    $('#jam_selesai').val(data.jam_selesai);
-    $('.modal-title').text('Edit Jadwal Periksa');
-}
-
-$(document).ready(function() {
-    // Reset form saat modal dibuka
-    $('.btn-tambah').click(function() {
-        $('#modalJadwal').modal('show');
-        $('#formJadwal')[0].reset();
-    });
-
-    // Validasi form sebelum submit
-    $('#formJadwal').on('submit', function(e) {
-        const jamMulai = $('input[name="jam_mulai"]').val();
-        const jamSelesai = $('input[name="jam_selesai"]').val();
-        
-        if (jamMulai >= jamSelesai) {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Jam selesai harus lebih besar dari jam mulai!',
-                showConfirmButton: true
-            });
-            return false;
         }
     });
 });

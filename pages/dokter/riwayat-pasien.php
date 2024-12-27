@@ -124,6 +124,45 @@ $result = mysqli_stmt_get_result($stmt);
     </div>
 </div>
 
+<!-- Modal Edit Riwayat -->
+<div class="modal fade" id="editRiwayatModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i> Edit Riwayat Pemeriksaan
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <form id="formEditRiwayat">
+                <div class="modal-body">
+                    <input type="hidden" name="id_periksa" id="edit_id_periksa">
+                    <div class="form-group">
+                        <label>Catatan</label>
+                        <textarea class="form-control" name="catatan" id="edit_catatan" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Obat</label>
+                        <select class="form-control select2" name="obat[]" id="edit_obat" multiple required>
+                            <?php
+                            $query_obat = "SELECT * FROM obat ORDER BY nama_obat";
+                            $result_obat = mysqli_query($koneksi, $query_obat);
+                            while($obat = mysqli_fetch_assoc($result_obat)) {
+                                echo "<option value='".$obat['id']."'>".$obat['nama_obat']."</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-warning">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function showRiwayatDetail(id_pasien) {
     $.ajax({
@@ -173,6 +212,89 @@ $('#detailModal').on('hidden.bs.modal', function () {
     if (tabelRiwayat) {
         tabelRiwayat.ajax.reload(null, false);
     }
+});
+
+// Fungsi untuk menampilkan modal edit
+function editRiwayat(id_periksa) {
+    $.ajax({
+        url: 'get_periksa_detail.php',
+        type: 'POST',
+        data: {id_periksa: id_periksa},
+        dataType: 'json',
+        success: function(response) {
+            if(response.success) {
+                $('#edit_id_periksa').val(response.data.id);
+                $('#edit_catatan').val(response.data.catatan);
+                
+                // Set nilai obat yang dipilih
+                $('#edit_obat').val(response.data.obat).trigger('change');
+                
+                $('#editRiwayatModal').modal('show');
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.message
+                });
+            }
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan saat mengambil data!'
+            });
+        }
+    });
+}
+
+// Handle submit form edit
+$('#formEditRiwayat').on('submit', function(e) {
+    e.preventDefault();
+    
+    $.ajax({
+        url: 'update_periksa.php',
+        type: 'POST',
+        data: $(this).serialize(),
+        dataType: 'json',
+        success: function(response) {
+            if(response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Data pemeriksaan berhasil diupdate!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(function() {
+                    $('#editRiwayatModal').modal('hide');
+                    // Refresh detail riwayat
+                    showRiwayatDetail($('#edit_id_pasien').val());
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.message
+                });
+            }
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan saat menyimpan data!'
+            });
+        }
+    });
+});
+
+// Inisialisasi Select2 untuk multiple select obat
+$(document).ready(function() {
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Pilih obat',
+        width: '100%'
+    });
 });
 </script>
 

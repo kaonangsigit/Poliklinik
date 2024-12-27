@@ -275,7 +275,11 @@ $result_jadwal = mysqli_query($koneksi, $query_jadwal);
                                             <td><?php echo $row['no_rm']; ?></td>
                                             <td><?php echo $row['username']; ?></td>
                                             <td>
-                                                <button type="button" class="btn btn-warning btn-sm btn-edit" data-toggle="modal" data-target="#modal-edit" data-id="<?php echo $row['id']; ?>">
+                                                <button type="button" class="btn btn-info btn-sm btn-riwayat" data-id="<?php echo $row['id']; ?>">
+                                                    <i class="fas fa-history"></i> Riwayat
+                                                </button>
+                                                <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" 
+                                                        data-target="#modal-edit" data-id="<?php echo $row['id']; ?>">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <a href="?hapus=<?php echo $row['id']; ?>" class="btn btn-danger btn-sm btn-hapus">
@@ -394,7 +398,57 @@ $result_jadwal = mysqli_query($koneksi, $query_jadwal);
     </div>
 </div>
 
-
+<!-- Modal Riwayat -->
+<div class="modal fade" id="modal-riwayat">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h4 class="modal-title">
+                    <i class="fas fa-history"></i> Riwayat Pasien
+                </h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td width="150">Nama Pasien</td>
+                                <td width="30">:</td>
+                                <td><strong id="nama-pasien">-</strong></td>
+                            </tr>
+                            <tr>
+                                <td>No. RM</td>
+                                <td>:</td>
+                                <td><strong id="no-rm">-</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="tabel-riwayat">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Tanggal Periksa</th>
+                                <th>Poli</th>
+                                <th>Dokter</th>
+                                <th>Catatan</th>
+                                <th>Obat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="riwayat-list">
+                            <!-- Data riwayat akan dimuat di sini -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     $(document).ready(function() {
@@ -488,6 +542,65 @@ $result_jadwal = mysqli_query($koneksi, $query_jadwal);
         }).then((result) => {
             if (result.isConfirmed) {
                 window.location.href = href;
+            }
+        });
+    });
+
+    // Handler untuk tombol riwayat
+    $('.btn-riwayat').click(function() {
+        const id = $(this).data('id');
+        const row = $(this).closest('tr');
+        const nama = row.find('td:eq(1)').text();
+        const no_rm = row.find('td:eq(2)').text();
+        
+        // Set informasi pasien
+        $('#nama-pasien').text(nama);
+        $('#no-rm').text(no_rm);
+        
+        // Ambil data riwayat
+        $.ajax({
+            url: 'get_riwayat_pasien.php',
+            type: 'POST',
+            data: { id: id },
+            success: function(response) {
+                if (response.success) {
+                    let html = '';
+                    if (response.data.length > 0) {
+                        response.data.forEach((item, index) => {
+                            html += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.tgl_periksa}</td>
+                                    <td>${item.nama_poli}</td>
+                                    <td>${item.nama_dokter}</td>
+                                    <td>${item.catatan}</td>
+                                    <td>${item.obat}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        html = `
+                            <tr>
+                                <td colspan="6" class="text-center">Tidak ada riwayat pemeriksaan</td>
+                            </tr>
+                        `;
+                    }
+                    $('#riwayat-list').html(html);
+                    $('#modal-riwayat').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: response.message
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Terjadi kesalahan saat mengambil data riwayat'
+                });
             }
         });
     });
