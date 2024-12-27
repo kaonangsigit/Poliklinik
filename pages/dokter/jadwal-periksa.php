@@ -5,6 +5,50 @@ include_once("../../config/koneksi.php");
 
 $id_dokter = $_SESSION['user_id'];
 
+// Proses tambah jadwal
+if(isset($_POST['submit'])) {
+    $hari = $_POST['hari'];
+    $jam_mulai = $_POST['jam_mulai'];
+    $jam_selesai = $_POST['jam_selesai'];
+    
+    try {
+        // Validasi jam
+        if($jam_mulai >= $jam_selesai) {
+            throw new Exception("Jam selesai harus lebih besar dari jam mulai!");
+        }
+        
+        // Insert jadwal baru
+        $query = "INSERT INTO jadwal_periksa (id_dokter, hari, jam_mulai, jam_selesai, status) 
+                 VALUES ('$id_dokter', '$hari', '$jam_mulai', '$jam_selesai', 'aktif')";
+        
+        if(mysqli_query($koneksi, $query)) {
+            echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Jadwal berhasil ditambahkan!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(function() {
+                    window.location.href = 'jadwal-periksa.php';
+                });
+            </script>";
+        } else {
+            throw new Exception("Gagal menambahkan jadwal!");
+        }
+        
+    } catch (Exception $e) {
+        echo "<script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '" . $e->getMessage() . "',
+                showConfirmButton: true
+            });
+        </script>";
+    }
+}
+
 // Proses update status jadwal
 if(isset($_POST['update_status'])) {
     $jadwal_id = $_POST['jadwal_id'];
@@ -27,85 +71,6 @@ if(isset($_POST['update_status'])) {
     }
 }
 
-// Proses tambah jadwal
-if(isset($_POST['submit'])) {
-    $hari = $_POST['hari'];
-    $jam_mulai = $_POST['jam_mulai'];
-    $jam_selesai = $_POST['jam_selesai'];
-    
-    // Validasi jam
-    if($jam_mulai >= $jam_selesai) {
-        echo "<script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Jam selesai harus lebih besar dari jam mulai!',
-                showConfirmButton: true
-            });
-        </script>";
-        exit;
-    }
-    
-    // Cek overlap jadwal
-    $query_check = "SELECT * FROM jadwal_periksa 
-                   WHERE id_dokter = ? 
-                   AND hari = ? 
-                   AND status = 'aktif'
-                   AND ((jam_mulai BETWEEN ? AND ?) 
-                   OR (jam_selesai BETWEEN ? AND ?))";
-    
-    $stmt_check = mysqli_prepare($koneksi, $query_check);
-    mysqli_stmt_bind_param($stmt_check, "isssss", 
-                         $id_dokter, $hari, $jam_mulai, $jam_selesai, 
-                         $jam_mulai, $jam_selesai);
-    mysqli_stmt_execute($stmt_check);
-    $result_check = mysqli_stmt_get_result($stmt_check);
-    
-    if(mysqli_num_rows($result_check) > 0) {
-        echo "<script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal',
-                text: 'Jadwal bertabrakan dengan jadwal aktif yang sudah ada!',
-                showConfirmButton: true
-            });
-        </script>";
-    } else {
-        try {
-            // Insert jadwal baru
-            $query = "INSERT INTO jadwal_periksa (id_dokter, hari, jam_mulai, jam_selesai, status) 
-                     VALUES (?, ?, ?, ?, 'aktif')";
-            $stmt = mysqli_prepare($koneksi, $query);
-            mysqli_stmt_bind_param($stmt, "isss", $id_dokter, $hari, $jam_mulai, $jam_selesai);
-            
-            if(mysqli_stmt_execute($stmt)) {
-                echo "<script>
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: 'Jadwal berhasil ditambahkan!',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(function() {
-                        window.location.href = 'jadwal-periksa.php';
-                    });
-                </script>";
-            } else {
-                throw new Exception(mysqli_error($koneksi));
-            }
-        } catch (Exception $e) {
-            echo "<script>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Gagal menambahkan jadwal: " . $e->getMessage() . "',
-                    showConfirmButton: true
-                });
-            </script>";
-        }
-    }
-}
-
 // Proses edit jadwal
 if(isset($_POST['edit_jadwal'])) {
     $id_jadwal = $_POST['id_jadwal'];
@@ -121,19 +86,19 @@ if(isset($_POST['edit_jadwal'])) {
         }
         
         // Update jadwal
-        $query_update = "UPDATE jadwal_periksa 
-                        SET hari = ?, 
-                            jam_mulai = ?, 
-                            jam_selesai = ? 
-                        WHERE id = ? 
-                        AND id_dokter = ?";
-                        
-        $stmt_update = mysqli_prepare($koneksi, $query_update);
-        mysqli_stmt_bind_param($stmt_update, "sssii", 
+        $query = "UPDATE jadwal_periksa 
+                 SET hari = ?, 
+                     jam_mulai = ?, 
+                     jam_selesai = ? 
+                 WHERE id = ? 
+                 AND id_dokter = ?";
+                 
+        $stmt = mysqli_prepare($koneksi, $query);
+        mysqli_stmt_bind_param($stmt, "sssii", 
                              $hari, $jam_mulai, $jam_selesai, 
                              $id_jadwal, $id_dokter);
         
-        if(mysqli_stmt_execute($stmt_update)) {
+        if(mysqli_stmt_execute($stmt)) {
             echo "<script>
                 Swal.fire({
                     icon: 'success',
@@ -240,22 +205,19 @@ $result = mysqli_stmt_get_result($stmt);
     </section>
 </div>
 
-<!-- Form Modal -->
+<!-- HTML Modal Form -->
 <div class="modal fade" id="modalJadwal">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" id="formJadwal">
+            <form method="post" action="">
                 <div class="modal-header">
-                    <h4 class="modal-title"></h4>
+                    <h4 class="modal-title">Tambah Jadwal Periksa</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <!-- Hidden input untuk ID jadwal -->
-                    <input type="hidden" name="id_jadwal" id="id_jadwal">
-                    
                     <div class="form-group">
                         <label>Hari</label>
-                        <select class="form-control" name="hari" id="hari" required>
+                        <select class="form-control" name="hari" required>
                             <option value="Senin">Senin</option>
                             <option value="Selasa">Selasa</option>
                             <option value="Rabu">Rabu</option>
@@ -266,16 +228,16 @@ $result = mysqli_stmt_get_result($stmt);
                     </div>
                     <div class="form-group">
                         <label>Jam Mulai</label>
-                        <input type="time" class="form-control" name="jam_mulai" id="jam_mulai" required>
+                        <input type="time" class="form-control" name="jam_mulai" required>
                     </div>
                     <div class="form-group">
                         <label>Jam Selesai</label>
-                        <input type="time" class="form-control" name="jam_selesai" id="jam_selesai" required>
+                        <input type="time" class="form-control" name="jam_selesai" required>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-primary" id="btnSimpan">Simpan</button>
+                    <button type="submit" name="submit" class="btn btn-primary">Simpan</button>
                 </div>
             </form>
         </div>
@@ -284,44 +246,19 @@ $result = mysqli_stmt_get_result($stmt);
 
 <script>
 $(document).ready(function() {
-    // Reset form saat modal dibuka untuk tambah baru
+    // Reset form saat modal dibuka
     $('.btn-tambah').click(function() {
         $('#modalJadwal').modal('show');
         $('#formJadwal')[0].reset();
-        $('.modal-title').text('Tambah Jadwal Periksa');
-        $('#btnSimpan').text('Simpan');
-        $('#formJadwal').attr('action', '');
-        $('#formJadwal').append('<input type="hidden" name="submit" value="1">');
-        $('#id_jadwal').val('');
     });
 
-    // Fungsi edit jadwal
-    window.editJadwal = function(data) {
-        $('#modalJadwal').modal('show');
-        $('.modal-title').text('Edit Jadwal Periksa');
-        $('#btnSimpan').text('Update');
-        
-        // Hapus input hidden submit jika ada
-        $('input[name="submit"]').remove();
-        
-        // Tambahkan input hidden untuk edit
-        $('#formJadwal').append('<input type="hidden" name="edit_jadwal" value="1">');
-        
-        // Set nilai form
-        $('#id_jadwal').val(data.id);
-        $('#hari').val(data.hari);
-        $('#jam_mulai').val(data.jam_mulai.substr(0, 5));
-        $('#jam_selesai').val(data.jam_selesai.substr(0, 5));
-    }
-
     // Validasi form sebelum submit
-    $('#formJadwal').on('submit', function(e) {
-        e.preventDefault();
-        
-        const jamMulai = $('#jam_mulai').val();
-        const jamSelesai = $('#jam_selesai').val();
+    $('form').on('submit', function(e) {
+        const jamMulai = $('input[name="jam_mulai"]').val();
+        const jamSelesai = $('input[name="jam_selesai"]').val();
         
         if (jamMulai >= jamSelesai) {
+            e.preventDefault();
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -330,9 +267,6 @@ $(document).ready(function() {
             });
             return false;
         }
-
-        // Submit form jika validasi berhasil
-        this.submit();
     });
 });
 
@@ -358,6 +292,44 @@ $('.status-jadwal').change(function() {
                 timer: 1500
             });
         }
+    });
+});
+
+// Fungsi untuk edit jadwal
+function editJadwal(jadwal) {
+    // Ubah judul modal
+    $('.modal-title').text('Edit Jadwal Periksa');
+    
+    // Isi form dengan data jadwal
+    $('select[name="hari"]').val(jadwal.hari);
+    $('input[name="jam_mulai"]').val(jadwal.jam_mulai.substr(0, 5));
+    $('input[name="jam_selesai"]').val(jadwal.jam_selesai.substr(0, 5));
+    
+    // Tambahkan input hidden untuk id jadwal
+    $('#modalJadwal form').append('<input type="hidden" name="id_jadwal" value="' + jadwal.id + '">');
+    
+    // Ubah nama submit button
+    $('button[name="submit"]').attr('name', 'edit_jadwal');
+    
+    // Tampilkan modal
+    $('#modalJadwal').modal('show');
+}
+
+// Reset form ketika modal ditutup
+$('#modalJadwal').on('hidden.bs.modal', function () {
+    $('.modal-title').text('Tambah Jadwal Periksa');
+    $('#modalJadwal form')[0].reset();
+    $('input[name="id_jadwal"]').remove();
+    $('button[name="edit_jadwal"]').attr('name', 'submit');
+});
+
+// Tambahkan event listener untuk tombol edit
+$(document).ready(function() {
+    $('.btn-tambah').click(function() {
+        $('.modal-title').text('Tambah Jadwal Periksa');
+        $('button[name="edit_jadwal"]').attr('name', 'submit');
+        $('input[name="id_jadwal"]').remove();
+        $('#modalJadwal form')[0].reset();
     });
 });
 </script>

@@ -125,25 +125,30 @@ $result = mysqli_stmt_get_result($stmt);
 </div>
 
 <!-- Modal Edit Riwayat -->
-<div class="modal fade" id="editRiwayatModal">
-    <div class="modal-dialog">
+<div class="modal fade" id="editRiwayatModal" tabindex="-1" role="dialog" aria-labelledby="editRiwayatModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">
-                    <i class="fas fa-edit"></i> Edit Riwayat Pemeriksaan
-                </h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRiwayatModalLabel">Edit Riwayat Pemeriksaan</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <form id="formEditRiwayat">
-                <div class="modal-body">
-                    <input type="hidden" name="id_periksa" id="edit_id_periksa">
+            <div class="modal-body">
+                <form id="formEditRiwayat">
+                    <input type="hidden" id="edit_id_periksa" name="id_periksa">
+                    <input type="hidden" id="edit_id_pasien" name="id_pasien">
                     <div class="form-group">
-                        <label>Catatan</label>
-                        <textarea class="form-control" name="catatan" id="edit_catatan" rows="3" required></textarea>
+                        <label for="edit_catatan">Catatan/Diagnosis</label>
+                        <textarea class="form-control" id="edit_catatan" name="catatan" rows="3" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Obat</label>
-                        <select class="form-control select2" name="obat[]" id="edit_obat" multiple required>
+                        <div class="custom-control custom-checkbox mb-2">
+                            <input type="checkbox" class="custom-control-input" id="tanpa_obat" name="tanpa_obat">
+                            <label class="custom-control-label" for="tanpa_obat">Tidak membutuhkan obat</label>
+                        </div>
+                        <label for="edit_obat">Obat</label>
+                        <select class="form-control select2" id="edit_obat" name="obat[]" multiple="multiple">
                             <?php
                             $query_obat = "SELECT * FROM obat ORDER BY nama_obat";
                             $result_obat = mysqli_query($koneksi, $query_obat);
@@ -153,149 +158,178 @@ $result = mysqli_stmt_get_result($stmt);
                             ?>
                         </select>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-warning">Update</button>
-                </div>
-            </form>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="btnUpdateRiwayat">Simpan</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+// Pastikan document ready
+$(document).ready(function() {
+    // Destroy Select2 jika sudah ada
+    if ($('#edit_obat').hasClass('select2-hidden-accessible')) {
+        $('#edit_obat').select2('destroy');
+    }
+    
+    // Inisialisasi ulang Select2
+    $('#edit_obat').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Pilih obat',
+        width: '100%',
+        dropdownParent: $('#editRiwayatModal'),
+        allowClear: true
+    });
+    
+    // Handle modal hidden
+    $('#editRiwayatModal').on('hidden.bs.modal', function() {
+        $('#edit_obat').val(null).trigger('change');
+    });
+});
+
+// Fungsi untuk edit riwayat
+function editRiwayat(id_periksa, catatan, obat_ids, id_pasien) {
+    // Reset form
+    $('#formEditRiwayat')[0].reset();
+    $('#edit_obat').val(null).trigger('change');
+    
+    // Set nilai form
+    $('#edit_id_periksa').val(id_periksa);
+    $('#edit_id_pasien').val(id_pasien);
+    $('#edit_catatan').val(catatan);
+    
+    // Set nilai obat jika ada
+    if (obat_ids && obat_ids !== 'null') {
+        let obatArray = obat_ids.split(',')
+            .map(id => id.trim())
+            .filter(id => id !== '');
+        $('#edit_obat').val(obatArray).trigger('change');
+    }
+    
+    // Reset checkbox tanpa obat
+    $('#tanpa_obat').prop('checked', false);
+    $('#edit_obat').prop('disabled', false);
+    
+    // Tampilkan modal
+    $('#editRiwayatModal').modal('show');
+}
+
+// Fungsi untuk refresh data riwayat
+function refreshRiwayatData() {
+    $.ajax({
+        url: window.location.href,
+        type: 'GET',
+        success: function(response) {
+            // Update tabel riwayat
+            let newContent = $(response).find('#tabelRiwayat').html();
+            $('#tabelRiwayat').html(newContent);
+            
+            // Jika modal detail sedang terbuka, refresh juga detailnya
+            if ($('#detailModal').hasClass('show')) {
+                let id_pasien = $('#edit_id_pasien').val();
+                if (id_pasien) {
+                    showRiwayatDetail(id_pasien);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error refreshing data:', error);
+        }
+    });
+}
+
+// Handle klik tombol simpan
+$('#btnUpdateRiwayat').on('click', function(e) {
+    e.preventDefault();
+    
+    let catatan = $('#edit_catatan').val().trim();
+    let id_periksa = $('#edit_id_periksa').val();
+    let id_pasien = $('#edit_id_pasien').val();
+    let obat = $('#edit_obat').val() || [];
+    let tanpa_obat = $('#tanpa_obat').is(':checked');
+    
+    if (!catatan) {
+        alert('Catatan tidak boleh kosong!');
+        return;
+    }
+    
+    // Jika checkbox tanpa obat dicentang, kosongkan array obat
+    if (tanpa_obat) {
+        obat = [];
+    }
+    
+    // Kirim data ke server
+    $.ajax({
+        url: 'update_periksa.php',
+        type: 'POST',
+        data: {
+            id_periksa: id_periksa,
+            catatan: catatan,
+            obat: obat,
+            tanpa_obat: tanpa_obat
+        },
+        success: function(response) {
+            if(response.success) {
+                $('#editRiwayatModal').modal('hide');
+                location.reload();
+            } else {
+                alert('Error: ' + (response.message || 'Terjadi kesalahan!'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Ajax Error:', error);
+            alert('Terjadi kesalahan pada server: ' + error);
+        }
+    });
+});
+
+// Tambahkan event handler untuk checkbox tanpa obat
+$('#tanpa_obat').on('change', function() {
+    let isChecked = $(this).is(':checked');
+    if (isChecked) {
+        // Disable dan kosongkan select obat
+        $('#edit_obat').prop('disabled', true).val(null).trigger('change');
+    } else {
+        // Enable kembali select obat
+        $('#edit_obat').prop('disabled', false);
+    }
+});
+
+// Event handler untuk modal hidden
+$('#editRiwayatModal').on('hidden.bs.modal', function () {
+    // Reset form dan select2
+    $('#formEditRiwayat')[0].reset();
+    $('#edit_obat').val(null).trigger('change');
+});
+
+// Fungsi untuk menampilkan detail riwayat
 function showRiwayatDetail(id_pasien) {
+    if (!id_pasien) return;
+    
+    $('#riwayatDetail').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><div class="mt-2">Memuat data...</div></div>');
+    
     $.ajax({
         url: 'get_riwayat_detail.php',
         type: 'POST',
-        data: {id_pasien: id_pasien},
+        data: { id_pasien: id_pasien },
         success: function(response) {
             $('#riwayatDetail').html(response);
             $('#detailModal').modal('show');
         },
         error: function() {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Terjadi kesalahan saat mengambil data!'
-            });
+            alert('Gagal memuat data riwayat!');
         }
     });
 }
 
-// Perbaikan inisialisasi DataTable
-var tabelRiwayat;
-$(document).ready(function() {
-    // Destroy jika sudah ada
-    if ($.fn.DataTable.isDataTable('#tabelRiwayat')) {
-        $('#tabelRiwayat').DataTable().destroy();
-    }
-    
-    // Inisialisasi baru
-    tabelRiwayat = $('#tabelRiwayat').DataTable({
-        "responsive": true,
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
-        },
-        "order": [[4, "desc"]], // Urutkan berdasarkan tanggal terakhir periksa
-        "columnDefs": [
-            {
-                "targets": [0, 3, 4, 5], // Kolom nomor, jumlah kunjungan, tanggal, dan aksi
-                "orderable": false
-            }
-        ]
-    });
-});
-
-// Refresh DataTable saat modal ditutup (jika diperlukan)
-$('#detailModal').on('hidden.bs.modal', function () {
-    if (tabelRiwayat) {
-        tabelRiwayat.ajax.reload(null, false);
-    }
-});
-
-// Fungsi untuk menampilkan modal edit
-function editRiwayat(id_periksa) {
-    $.ajax({
-        url: 'get_periksa_detail.php',
-        type: 'POST',
-        data: {id_periksa: id_periksa},
-        dataType: 'json',
-        success: function(response) {
-            if(response.success) {
-                $('#edit_id_periksa').val(response.data.id);
-                $('#edit_catatan').val(response.data.catatan);
-                
-                // Set nilai obat yang dipilih
-                $('#edit_obat').val(response.data.obat).trigger('change');
-                
-                $('#editRiwayatModal').modal('show');
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: response.message
-                });
-            }
-        },
-        error: function() {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Terjadi kesalahan saat mengambil data!'
-            });
-        }
-    });
-}
-
-// Handle submit form edit
-$('#formEditRiwayat').on('submit', function(e) {
-    e.preventDefault();
-    
-    $.ajax({
-        url: 'update_periksa.php',
-        type: 'POST',
-        data: $(this).serialize(),
-        dataType: 'json',
-        success: function(response) {
-            if(response.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil',
-                    text: 'Data pemeriksaan berhasil diupdate!',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(function() {
-                    $('#editRiwayatModal').modal('hide');
-                    // Refresh detail riwayat
-                    showRiwayatDetail($('#edit_id_pasien').val());
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: response.message
-                });
-            }
-        },
-        error: function() {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Terjadi kesalahan saat menyimpan data!'
-            });
-        }
-    });
-});
-
-// Inisialisasi Select2 untuk multiple select obat
-$(document).ready(function() {
-    $('.select2').select2({
-        theme: 'bootstrap4',
-        placeholder: 'Pilih obat',
-        width: '100%'
-    });
-});
+// Tambahkan interval refresh otomatis (opsional, setiap 30 detik)
+setInterval(function() {
+    refreshRiwayatData();
+}, 30000);
 </script>
 
 <?php include_once("layouts/footer.php"); ?> 

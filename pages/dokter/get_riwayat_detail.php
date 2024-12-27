@@ -6,11 +6,13 @@ if(isset($_POST['id_pasien'])) {
     
     // Query untuk mengambil detail riwayat kunjungan
     $query = "SELECT 
+                pr.id as id_periksa,
                 pr.tgl_periksa,
                 dp.keluhan,
                 pr.catatan,
                 pr.biaya_periksa,
-                GROUP_CONCAT(o.nama_obat SEPARATOR ', ') as obat_diberikan
+                GROUP_CONCAT(o.nama_obat SEPARATOR ', ') as obat_diberikan,
+                GROUP_CONCAT(o.id) as obat_ids
               FROM daftar_poli dp
               JOIN jadwal_periksa jp ON dp.id_jadwal = jp.id
               LEFT JOIN periksa pr ON dp.id = pr.id_daftar_poli
@@ -48,6 +50,7 @@ if(isset($_POST['id_pasien'])) {
                     <th>Diagnosis/Catatan</th>
                     <th>Obat</th>
                     <th>Biaya</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,6 +61,15 @@ if(isset($_POST['id_pasien'])) {
                     <td><?php echo $row['catatan']; ?></td>
                     <td><?php echo $row['obat_diberikan'] ?: '-'; ?></td>
                     <td>Rp <?php echo number_format($row['biaya_periksa'], 0, ',', '.'); ?></td>
+                    <td>
+                        <button type="button" 
+                                class="btn btn-warning btn-sm" 
+                                onclick="editRiwayat(<?php echo $row['id_periksa']; ?>, 
+                                                   '<?php echo addslashes($row['catatan']); ?>', 
+                                                   '<?php echo $row['obat_ids']; ?>')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </td>
                 </tr>
                 <?php } ?>
             </tbody>
