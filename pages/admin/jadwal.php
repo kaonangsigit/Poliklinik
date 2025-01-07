@@ -25,7 +25,17 @@ if (isset($_POST['tambah'])) {
         $query = "INSERT INTO jadwal_periksa (id_dokter, hari, jam_mulai, jam_selesai) 
                  VALUES ($id_dokter, '$hari', '$jam_mulai', '$jam_selesai')";
         mysqli_query($koneksi, $query);
-        header("Location: jadwal.php");
+        echo "<script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Jadwal berhasil ditambahkan!',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(function() {
+                window.location.href = 'jadwal.php';
+            });
+        </script>";
     }
 }
 
@@ -33,7 +43,17 @@ if (isset($_POST['tambah'])) {
 if (isset($_GET['hapus'])) {
     $id = $_GET['hapus'];
     mysqli_query($koneksi, "DELETE FROM jadwal_periksa WHERE id=$id");
-    header("Location: jadwal.php");
+    echo "<script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: 'Jadwal berhasil dihapus!',
+            showConfirmButton: false,
+            timer: 1500
+        }).then(function() {
+            window.location.href = 'jadwal.php';
+        });
+    </script>";
 }
 
 // Proses ubah status jadwal
@@ -45,7 +65,72 @@ if (isset($_GET['ubah_status'])) {
     $stmt = $koneksi->prepare($query);
     $stmt->bind_param("si", $status, $id);
     $stmt->execute();
-    header("Location: jadwal.php");
+    echo "<script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: 'Status jadwal berhasil diubah!',
+            showConfirmButton: false,
+            timer: 1500
+        }).then(function() {
+            window.location.href = 'jadwal.php';
+        });
+    </script>";
+}
+
+// Tambahkan proses edit jadwal setelah proses ubah status
+if (isset($_POST['edit_jadwal'])) {
+    $id = $_POST['id_jadwal'];
+    $jam_mulai = $_POST['jam_mulai'];
+    $jam_selesai = $_POST['jam_selesai'];
+    
+    // Validasi jam
+    if($jam_mulai >= $jam_selesai) {
+        echo "<script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Jam selesai harus lebih besar dari jam mulai!',
+                showConfirmButton: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'jadwal.php';
+                }
+            });
+        </script>";
+    } else {
+        // Jika validasi berhasil, lakukan update
+        $query = "UPDATE jadwal_periksa SET jam_mulai = ?, jam_selesai = ? WHERE id = ?";
+        $stmt = $koneksi->prepare($query);
+        $stmt->bind_param("ssi", $jam_mulai, $jam_selesai, $id);
+        
+        if($stmt->execute()) {
+            echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Jadwal berhasil diubah!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(function() {
+                    window.location.href = 'jadwal.php';
+                });
+            </script>";
+        } else {
+            echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal mengubah jadwal!',
+                    showConfirmButton: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = 'jadwal.php';
+                    }
+                });
+            </script>";
+        }
+    }
 }
 
 // Ambil data jadwal yang aktif
@@ -147,12 +232,51 @@ $result_dokter = mysqli_query($koneksi, $query_dokter);
                                                     <i class="fas fa-toggle-on"></i> Aktifkan
                                                 <?php endif; ?>
                                             </button>
+                                            <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modalEdit<?php echo $row['id']; ?>">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
                                             <a href="?hapus=<?php echo $row['id']; ?>" class="btn btn-danger btn-sm btn-hapus" 
-                                               onclick="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?')">
                                                 <i class="fas fa-trash"></i> Hapus
                                             </a>
                                         </td>
                                     </tr>
+
+                                    <!-- Modal Edit untuk setiap baris -->
+                                    <div class="modal fade" id="modalEdit<?php echo $row['id']; ?>">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h4 class="modal-title">Edit Jadwal</h4>
+                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                </div>
+                                                <form action="" method="post">
+                                                    <input type="hidden" name="id_jadwal" value="<?php echo $row['id']; ?>">
+                                                    <div class="modal-body">
+                                                        <div class="form-group">
+                                                            <label>Hari</label>
+                                                            <input type="text" class="form-control" value="<?php echo $row['hari']; ?>" readonly>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Dokter</label>
+                                                            <input type="text" class="form-control" value="<?php echo $row['nama_dokter']; ?>" readonly>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Jam Mulai</label>
+                                                            <input type="time" class="form-control" name="jam_mulai" value="<?php echo substr($row['jam_mulai'], 0, 5); ?>" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Jam Selesai</label>
+                                                            <input type="time" class="form-control" name="jam_selesai" value="<?php echo substr($row['jam_selesai'], 0, 5); ?>" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                                        <button type="submit" name="edit_jadwal" class="btn btn-primary">Simpan</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <?php } ?>
                                 </tbody>
                             </table>
@@ -246,6 +370,29 @@ $(document).ready(function() {
             $(this).removeClass('animated pulse');
         }
     );
+});
+
+$(document).ready(function() {
+    // Inisialisasi SweetAlert untuk tombol hapus
+    $(document).on('click', '.btn-hapus', function(e) {
+        e.preventDefault();
+        const href = $(this).attr('href');
+        
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            text: "Data jadwal akan dihapus!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = href;
+            }
+        });
+    });
 });
 </script>
 

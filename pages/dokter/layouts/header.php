@@ -187,6 +187,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'dokter') {
 <script src="../../assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <!-- SweetAlert2 -->

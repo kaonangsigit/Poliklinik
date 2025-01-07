@@ -10,42 +10,72 @@ if(isset($_POST['submit'])) {
     $hari = $_POST['hari'];
     $jam_mulai = $_POST['jam_mulai'];
     $jam_selesai = $_POST['jam_selesai'];
+    $id_dokter = $_SESSION['user_id'];
+
+    // Cek jadwal yang sama untuk dokter tersebut di hari yang sama
+    $query_cek = "SELECT * FROM jadwal_periksa 
+                  WHERE id_dokter = ? 
+                  AND hari = ? 
+                  AND status = 'aktif'";
     
-    try {
-        // Validasi jam
-        if($jam_mulai >= $jam_selesai) {
-            throw new Exception("Jam selesai harus lebih besar dari jam mulai!");
-        }
-        
-        // Insert jadwal baru
-        $query = "INSERT INTO jadwal_periksa (id_dokter, hari, jam_mulai, jam_selesai, status) 
-                 VALUES ('$id_dokter', '$hari', '$jam_mulai', '$jam_selesai', 'aktif')";
-        
-        if(mysqli_query($koneksi, $query)) {
-            echo "<script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil',
-                    text: 'Jadwal berhasil ditambahkan!',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(function() {
-                    window.location.href = 'jadwal-periksa.php';
-                });
-            </script>";
-        } else {
-            throw new Exception("Gagal menambahkan jadwal!");
-        }
-        
-    } catch (Exception $e) {
+    $stmt_cek = mysqli_prepare($koneksi, $query_cek);
+    mysqli_stmt_bind_param($stmt_cek, "is", $id_dokter, $hari);
+    mysqli_stmt_execute($stmt_cek);
+    $result_cek = mysqli_stmt_get_result($stmt_cek);
+
+    if(mysqli_num_rows($result_cek) > 0) {
+        // Jika ditemukan jadwal yang sama
         echo "<script>
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: '" . $e->getMessage() . "',
+                title: 'Gagal!',
+                text: 'Jadwal untuk hari " . $hari . " sudah ada!',
                 showConfirmButton: true
             });
         </script>";
+    } else {
+        // Jika tidak ada jadwal yang sama, cek jam
+        if($jam_mulai >= $jam_selesai) {
+            echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Jam selesai harus lebih besar dari jam mulai!',
+                    showConfirmButton: true
+                });
+            </script>";
+        } else {
+            // Insert jadwal baru
+            $query_insert = "INSERT INTO jadwal_periksa 
+                           (id_dokter, hari, jam_mulai, jam_selesai, status) 
+                           VALUES (?, ?, ?, ?, 'aktif')";
+            
+            $stmt_insert = mysqli_prepare($koneksi, $query_insert);
+            mysqli_stmt_bind_param($stmt_insert, "isss", $id_dokter, $hari, $jam_mulai, $jam_selesai);
+            
+            if(mysqli_stmt_execute($stmt_insert)) {
+                echo "<script>
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Jadwal berhasil ditambahkan!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(function() {
+                        window.location.href = 'jadwal-periksa.php';
+                    });
+                </script>";
+            } else {
+                echo "<script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal!',
+                        text: 'Gagal menambahkan jadwal!',
+                        showConfirmButton: true
+                    });
+                </script>";
+            }
+        }
     }
 }
 

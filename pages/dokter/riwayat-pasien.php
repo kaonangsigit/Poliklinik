@@ -325,11 +325,6 @@ function showRiwayatDetail(id_pasien) {
         }
     });
 }
-
-// Tambahkan interval refresh otomatis (opsional, setiap 30 detik)
-setInterval(function() {
-    refreshRiwayatData();
-}, 30000);
 </script>
 
 <?php include_once("layouts/footer.php"); ?> 

@@ -42,10 +42,18 @@ if(isset($_POST['mulai_periksa'])) {
                     WHERE id = '$id_daftar_poli'";
     mysqli_query($koneksi, $query_update);
     
-    echo "<script>
-        alert('Status pasien diupdate!');
-        window.location.href='periksa-pasien.php';
-    </script>";
+    echo 
+    "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Status pasien diupdate!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(function() {
+                    window.location.href = 'periksa-pasien.php';
+                });
+            </script>";
 }
 
 // Proses pemeriksaan
@@ -100,8 +108,15 @@ if(isset($_POST['periksa'])) {
         mysqli_query($koneksi, $query_status);
         
         echo "<script>
-            alert('Pemeriksaan berhasil disimpan!');
-            window.location.href='periksa-pasien.php';
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Pemeriksaan berhasil disimpan!',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(function() {
+                window.location.href='periksa-pasien.php';
+            });
         </script>";
     }
 }

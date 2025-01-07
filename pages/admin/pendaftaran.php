@@ -307,30 +307,28 @@ $result_jadwal = mysqli_query($koneksi, $query_jadwal);
                                                     <td><?php echo $row['nama_dokter']; ?></td>
                                                     <td><?php echo $row['no_antrian']; ?></td>
                                                     <td>
-                                                        <?php if ($row['status'] == 'menunggu') { ?>
-                                                            <span class="badge badge-warning">
-                                                                <i class="fas fa-clock"></i> Menunggu
-                                                            </span>
-                                                        <?php } else if ($row['status'] == 'diperiksa') { ?>
-                                                            <span class="badge badge-info">
-                                                                <i class="fas fa-stethoscope"></i> Diperiksa
-                                                            </span>
-                                                        <?php } ?>
+                                                        <span id="status-<?php echo $row['id']; ?>" class="badge badge-<?php echo $status_class; ?>">
+                                                            <i class="fas fa-<?php 
+                                                                echo $row['status'] == 'selesai' ? 'check-circle' : 
+                                                                    ($row['status'] == 'diperiksa' ? 'stethoscope' : 'clock');
+                                                            ?>"></i>
+                                                            <?php echo ucfirst($row['status']); ?>
+                                                        </span>
                                                     </td>
-                                                    <td>
-                                                        <?php if ($row['status'] == 'menunggu') { ?>
+                                                    <td id="action-<?php echo $row['id']; ?>">
+                                                        <?php if($row['status'] == 'menunggu'): ?>
                                                             <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" 
                                                                     data-target="#modal-edit-<?php echo $row['id']; ?>">
-                                                                <i class="fas fa-edit"></i>
+                                                                <i class="fas fa-edit"></i> Edit
                                                             </button>
                                                             <a href="?hapus=<?php echo $row['id']; ?>" class="btn btn-danger btn-sm btn-hapus">
-                                                                <i class="fas fa-trash"></i>
+                                                                <i class="fas fa-trash"></i> Hapus
                                                             </a>
-                                                        <?php } else if ($row['status'] == 'diperiksa') { ?>
-                                                            <span class="badge badge-info">
-                                                                <i class="fas fa-spinner fa-spin"></i> Sedang Diperiksa
-                                                            </span>
-                                                        <?php } ?>
+                                                        <?php else: ?>
+                                                            <button type="button" class="btn btn-secondary btn-sm" disabled>
+                                                                <i class="fas fa-lock"></i> Terkunci
+                                                            </button>
+                                                        <?php endif; ?>
                                                     </td>
                                                 </tr>
                                             <?php 
@@ -577,4 +575,97 @@ $(document).ready(function() {
     vertical-align: middle;
 }
 </style>
+
+<script>
+$(document).ready(function() {
+    // Fungsi untuk memperbarui status dan tombol aksi secara real-time
+    function updateStatus() {
+        $.ajax({
+            url: 'get_pendaftaran_status.php',
+            method: 'GET',
+            success: function(response) {
+                response.forEach(function(data) {
+                    // Update badge status
+                    let statusCell = $(`#status-${data.id}`);
+                    let actionCell = $(`#action-${data.id}`); // Tambahkan cell aksi
+                    let statusClass = '';
+                    let statusIcon = '';
+                    
+                    switch(data.status) {
+                        case 'menunggu':
+                            statusClass = 'warning';
+                            statusIcon = 'clock';
+                            // Update tombol aksi untuk status menunggu
+                            actionCell.html(`
+                                <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" 
+                                        data-target="#modal-edit-${data.id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <a href="?hapus=${data.id}" class="btn btn-danger btn-sm btn-hapus">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </a>
+                            `);
+                            break;
+                        case 'diperiksa':
+                            statusClass = 'primary';
+                            statusIcon = 'stethoscope';
+                            // Update tombol aksi untuk status diperiksa
+                            actionCell.html(`
+                                <button type="button" class="btn btn-secondary btn-sm" disabled>
+                                    <i class="fas fa-lock"></i> Terkunci
+                                </button>
+                            `);
+                            break;
+                        case 'selesai':
+                            statusClass = 'success';
+                            statusIcon = 'check-circle';
+                            // Update tombol aksi untuk status selesai
+                            actionCell.html(`
+                                <button type="button" class="btn btn-secondary btn-sm" disabled>
+                                    <i class="fas fa-lock"></i> Terkunci
+                                </button>
+                            `);
+                            break;
+                    }
+                    
+                    // Update badge status dengan animasi
+                    statusCell.fadeOut(200, function() {
+                        $(this).html(`
+                            <span class="badge badge-${statusClass}">
+                                <i class="fas fa-${statusIcon}"></i> 
+                                ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+                            </span>
+                        `).fadeIn(200);
+                    });
+                });
+            }
+        });
+    }
+
+    // Update status setiap 5 detik
+    setInterval(updateStatus, 5000);
+
+    // Inisialisasi SweetAlert untuk tombol hapus
+    $(document).on('click', '.btn-hapus', function(e) {
+        e.preventDefault();
+        const href = $(this).attr('href');
+        
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            text: "Data pendaftaran akan dihapus!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = href;
+            }
+        });
+    });
+});
+</script>
+
 <?php include_once("layouts/footer.php"); ?> 

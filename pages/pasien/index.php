@@ -94,68 +94,88 @@ if(isset($_POST['batalkan'])) {
             <!-- Informasi Pendaftaran Hari Ini -->
             <?php if ($pendaftaran) { ?>
             <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="alert alert-success mb-4">
-                                <h5 class="mb-0"><i class="fas fa-check-circle"></i> Anda telah terdaftar untuk pemeriksaan hari ini</h5>
-                            </div>
-                            
-                            <h4 class="text-primary mb-4">Nomor Antrian Anda</h4>
-                            <div class="antrian-number mb-4">
-                                <span class="display-1 text-primary font-weight-bold" style="font-size: 100px;"><?php echo $pendaftaran['no_antrian']; ?></span>
-                            </div>
-                            
-                            <div class="row mt-4">
-                                <div class="col-md-4">
-                                    <div class="card bg-light shadow-sm">
-                                        <div class="card-body text-center">
-                                            <div class="icon-box mb-3">
-                                                <i class="fas fa-hospital-alt fa-3x text-primary"></i>
+                <div class="col-12 col-md-10">
+                    <div class="card shadow-lg border-0">
+                        <div class="card-body p-3 p-md-5">
+                            <div class="text-center mb-4">
+                                <div class="alert alert-success mb-4 py-3 py-md-4">
+                                    <h4 class="mb-0 h5 h4-md">
+                                        <i class="fas fa-check-circle fa-lg mr-2"></i> 
+                                        Anda telah terdaftar untuk pemeriksaan hari ini
+                                    </h4>
+                                </div>
+                                
+                                <div class="mb-4 mb-md-5">
+                                    <h3 class="text-primary mb-3">Nomor Antrian Anda</h3>
+                                    <div class="antrian-number mb-4 p-3 p-md-4">
+                                        <span class="antrian-display">
+                                            <?php echo $pendaftaran['no_antrian']; ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                        <div class="card bg-gradient-primary text-white h-100 shadow-sm">
+                                            <div class="card-body text-center p-3 p-md-4">
+                                                <div class="icon-box mb-3">
+                                                    <i class="fas fa-hospital-alt fa-2x fa-md-3x"></i>
+                                                </div>
+                                                <h5 class="text-uppercase mb-2 small-text">Poli</h5>
+                                                <h4 class="font-weight-bold mb-0 h5 h4-md">
+                                                    <?php echo $pendaftaran['nama_poli']; ?>
+                                                </h4>
                                             </div>
-                                            <h6 class="text-muted mb-2">Poli</h6>
-                                            <h5 class="mb-0 font-weight-bold"><?php echo $pendaftaran['nama_poli']; ?></h5>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                        <div class="card bg-gradient-success text-white h-100 shadow-sm">
+                                            <div class="card-body text-center p-3 p-md-4">
+                                                <div class="icon-box mb-3">
+                                                    <i class="fas fa-user-md fa-2x fa-md-3x"></i>
+                                                </div>
+                                                <h5 class="text-uppercase mb-2 small-text">Dokter</h5>
+                                                <h4 class="font-weight-bold mb-0 h5 h4-md">
+                                                    <?php echo $pendaftaran['nama_dokter']; ?>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                        <div class="card bg-gradient-warning text-white h-100 shadow-sm">
+                                            <div class="card-body text-center p-3 p-md-4">
+                                                <div class="icon-box mb-3">
+                                                    <i class="fas fa-clock fa-2x fa-md-3x"></i>
+                                                </div>
+                                                <h5 class="text-uppercase mb-2 small-text">Jadwal</h5>
+                                                <h4 class="font-weight-bold mb-0 h5 h4-md">
+                                                    <?php echo $pendaftaran['hari']; ?>
+                                                    <div class="small mt-2">
+                                                        <?php echo $pendaftaran['jam_mulai'] . ' - ' . $pendaftaran['jam_selesai']; ?>
+                                                    </div>
+                                                </h4>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card bg-light shadow-sm">
-                                        <div class="card-body text-center">
-                                            <div class="icon-box mb-3">
-                                                <i class="fas fa-user-md fa-3x text-success"></i>
-                                            </div>
-                                            <h6 class="text-muted mb-2">Dokter</h6>
-                                            <h5 class="mb-0 font-weight-bold"><?php echo $pendaftaran['nama_dokter']; ?></h5>
-                                        </div>
+                                
+                                <div class="mt-4 mt-md-5">
+                                    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center">
+                                        <span class="badge badge-pill px-3 py-2 px-md-4 py-md-3 mb-3 mb-md-0 mr-md-3" 
+                                              id="status-badge">
+                                            <i class="fas fa-hourglass-half mr-2"></i> 
+                                            Status: <span id="status-text" class="font-weight-bold">
+                                                <?php echo ucfirst($pendaftaran['status']); ?>
+                                            </span>
+                                        </span>
+                                        
+                                        <button onclick="konfirmasiBatal(<?php echo $pendaftaran['id']; ?>)" 
+                                                class="btn btn-danger btn-lg w-100 w-md-auto"
+                                                id="btn-batal">
+                                            <i class="fas fa-times-circle"></i> Batalkan Pendaftaran
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card bg-light shadow-sm">
-                                        <div class="card-body text-center">
-                                            <div class="icon-box mb-3">
-                                                <i class="fas fa-clock fa-3x text-warning"></i>
-                                            </div>
-                                            <h6 class="text-muted mb-2">Jadwal</h6>
-                                            <h5 class="mb-0 font-weight-bold">
-                                                <?php echo $pendaftaran['hari']; ?><br>
-                                                <small><?php echo $pendaftaran['jam_mulai'] . ' - ' . $pendaftaran['jam_selesai']; ?></small>
-                                            </h5>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-4">
-                                <span class="badge badge-pill px-4 py-2" style="font-size: 1rem;" id="status-badge">
-                                    <i class="fas fa-hourglass-half mr-2"></i> Status: 
-                                    <span id="status-text"><?php echo ucfirst($pendaftaran['status']); ?></span>
-                                </span>
-                                <button onclick="konfirmasiBatal(<?php echo $pendaftaran['id']; ?>)" 
-                                        class="btn btn-danger btn-lg ml-3"
-                                        id="btn-batal"
-                                        style="display: <?php echo $pendaftaran['status'] != 'menunggu' ? 'none' : 'inline-block'; ?>">
-                                    <i class="fas fa-times-circle"></i> Batalkan Pendaftaran
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -218,46 +238,86 @@ if(isset($_POST['batalkan'])) {
 </div>
 
 <style>
-.antrian-number {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 15px;
-    display: inline-block;
+/* Responsive styles */
+.antrian-display {
+    font-size: 4rem;
+    font-weight: bold;
+    color: var(--primary);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
-.icon-box {
-    height: 80px;
-    width: 80px;
-    line-height: 80px;
-    border-radius: 50%;
-    background: #fff;
-    margin: 0 auto;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+@media (min-width: 768px) {
+    .antrian-display {
+        font-size: 7rem;
+    }
+    
+    .h4-md {
+        font-size: 1.5rem;
+    }
+    
+    .h5-md {
+        font-size: 1.25rem;
+    }
+    
+    .fa-md-3x {
+        font-size: 3em;
+    }
+    
+    .w-md-auto {
+        width: auto !important;
+    }
 }
 
+@media (max-width: 767px) {
+    .small-text {
+        font-size: 0.875rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .icon-box {
+        height: 60px;
+        width: 60px;
+        line-height: 60px;
+    }
+}
+
+/* Animation */
 .card {
-    border: none;
-    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.shadow-sm {
-    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .badge-pill {
-    border-radius: 50rem;
+    transition: all 0.3s ease;
 }
 
-.badge, .btn {
-    transition: all 0.3s ease-in-out;
+.btn {
+    transition: all 0.3s ease;
 }
 
-#btn-batal {
-    transition: opacity 0.3s ease-in-out, display 0.3s ease-in-out;
+/* Gradient backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
 }
 
-.badge i {
-    transition: all 0.3s ease-in-out;
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+/* Custom shadows */
+.shadow-custom {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 </style>
 
