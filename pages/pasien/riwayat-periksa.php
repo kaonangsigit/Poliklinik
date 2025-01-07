@@ -3,10 +3,15 @@ include_once("layouts/header.php");
 include_once("layouts/sidebar.php");
 include_once("../../config/koneksi.php");
 
+// Set timezone untuk Indonesia
+date_default_timezone_set('Asia/Jakarta');
+
 $id_pasien = $_SESSION['user_id'];
 
 // Ambil riwayat pemeriksaan dengan JOIN yang benar
-$query = "SELECT pr.id, pr.tgl_periksa, pr.catatan, pr.biaya_periksa,
+$query = "SELECT pr.id, 
+          dp.created_at as tgl_daftar,
+          pr.catatan, pr.biaya_periksa,
           dp.keluhan, d.nama as nama_dokter, pol.nama_poli
           FROM daftar_poli dp
           JOIN periksa pr ON dp.id = pr.id_daftar_poli
@@ -14,7 +19,7 @@ $query = "SELECT pr.id, pr.tgl_periksa, pr.catatan, pr.biaya_periksa,
           JOIN dokter d ON jp.id_dokter = d.id
           JOIN poli pol ON d.id_poli = pol.id
           WHERE dp.id_pasien = '$id_pasien'
-          ORDER BY pr.tgl_periksa DESC";
+          ORDER BY dp.created_at DESC";
 
 $result = mysqli_query($koneksi, $query);
 
@@ -73,7 +78,10 @@ if (!$result) {
                                         ?>
                                         <tr>
                                             <td class="text-center"><?php echo $no++; ?></td>
-                                            <td><?php echo date('d/m/Y H:i', strtotime($row['tgl_periksa'])); ?></td>
+                                            <td><?php 
+                                                $waktu_daftar = new DateTime($row['tgl_daftar']);
+                                                echo $waktu_daftar->format('d/m/Y H:i'); 
+                                            ?></td>
                                             <td>
                                                 <span class="badge badge-info">
                                                     <?php echo $row['nama_poli']; ?>

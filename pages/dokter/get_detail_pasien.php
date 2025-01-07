@@ -72,7 +72,10 @@ if ($detail = mysqli_fetch_assoc($result_detail)) {
             <table class="table table-borderless">
                 <tr>
                     <td width="35%">Tanggal Periksa</td>
-                    <td>: <?php echo date('d/m/Y H:i', strtotime($detail['tgl_periksa'])); ?></td>
+                    <td>: <?php 
+                        $waktu_daftar = new DateTime($detail['tgl_daftar']); 
+                        echo $waktu_daftar->format('d/m/Y H:i'); 
+                    ?></td>
                 </tr>
                 <tr>
                     <td>Poli</td>

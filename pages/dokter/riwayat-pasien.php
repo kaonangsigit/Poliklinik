@@ -3,18 +3,20 @@ include_once("layouts/header.php");
 include_once("layouts/sidebar.php");
 include_once("../../config/koneksi.php");
 
+date_default_timezone_set('Asia/Jakarta');
+
 $id_dokter = $_SESSION['user_id'];
 
 // Set tanggal default ke hari ini jika tidak ada tanggal yang dipilih
 $selected_date = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
 
-// Modifikasi query untuk mengelompokkan berdasarkan pasien
+// Modifikasi query untuk menampilkan waktu yang tepat
 $query = "SELECT 
             p.nama as nama_pasien,
             p.no_rm,
             p.id as id_pasien,
             COUNT(DISTINCT pr.id) as jumlah_kunjungan,
-            MAX(COALESCE(pr.tgl_periksa, dp.created_at)) as terakhir_periksa,
+            MAX(dp.created_at) as terakhir_periksa,
             dp.status
           FROM daftar_poli dp
           JOIN jadwal_periksa jp ON dp.id_jadwal = jp.id
@@ -87,7 +89,14 @@ $result = mysqli_stmt_get_result($stmt);
                                 <td><?php echo $row['nama_pasien']; ?></td>
                                 <td class="text-center"><?php echo $row['jumlah_kunjungan']; ?> kali</td>
                                 <td class="text-center">
-                                    <?php echo date('d/m/Y', strtotime($row['terakhir_periksa'])); ?>
+                                    <?php 
+                                        if(!empty($row['terakhir_periksa'])) {
+                                            $waktu = new DateTime($row['terakhir_periksa']);
+                                            echo $waktu->format('d/m/Y');
+                                        } else {
+                                            echo "-";
+                                        }
+                                    ?>
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-info btn-sm" 

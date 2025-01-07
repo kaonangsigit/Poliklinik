@@ -13,17 +13,13 @@
   <script src="../../assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
 
   <script>
-      // Fungsi ini dijalankan ketika dokumen HTML sudah siap
       $(function () {
-          // Inisialisasi DataTable pada elemen dengan id "example1"
-          // DataTable adalah plugin jQuery untuk membuat tabel HTML menjadi lebih interaktif
           $("#example1").DataTable({
-              "responsive": true,      // Membuat tabel responsif/menyesuaikan ukuran layar
-              "lengthChange": false,   // Menonaktifkan opsi untuk mengubah jumlah data per halaman
-              "autoWidth": false       // Menonaktifkan pengaturan lebar kolom otomatis
+              "responsive": true,
+              "lengthChange": false,
+              "autoWidth": false
           });
       });
-  </script>
   </script>
   </body>
   </html>
