@@ -7,16 +7,16 @@ $id_dokter = $_SESSION['user_id'];
 
 // Query untuk mendapatkan daftar konsultasi
 $query = "SELECT k.*, p.nama as nama_pasien, k.tgl_konsultasi,
-          k.subject, k.pertanyaan, k.jawaban
+          k.subject, k.pertanyaan, k.tanggapan
           FROM konsultasi k
           JOIN pasien p ON k.id_pasien = p.id
           WHERE k.id_dokter = ?
           ORDER BY k.tgl_konsultasi DESC";
 
-$stmt = $koneksi->prepare($query);
-$stmt->bind_param("i", $id_dokter);
-$stmt->execute();
-$result = $stmt->get_result();
+$stmt = mysqli_prepare($koneksi, $query);
+mysqli_stmt_bind_param($stmt, "i", $id_dokter);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 
 <div class="content-wrapper">
@@ -36,7 +36,7 @@ $result = $stmt->get_result();
                 <div class="card-body">
                     <table id="example1" class="table table-bordered table-striped">
                         <thead>
-                            <tr class="bg-primary">
+                            <tr class="bg-primary text-white">
                                 <th>Tanggal Konsultasi</th>
                                 <th>Nama Pasien</th>
                                 <th>Subject</th>
@@ -46,22 +46,24 @@ $result = $stmt->get_result();
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($row = $result->fetch_assoc()) { ?>
+                            <?php while ($row = mysqli_fetch_assoc($result)) { ?>
                                 <tr>
                                     <td><?php echo date('Y-m-d H:i:s', strtotime($row['tgl_konsultasi'])); ?></td>
-                                    <td><?php echo $row['nama_pasien']; ?></td>
-                                    <td><?php echo $row['subject']; ?></td>
-                                    <td><?php echo $row['pertanyaan']; ?></td>
-                                    <td><?php echo $row['jawaban'] ?: '-'; ?></td>
+                                    <td><?php echo htmlspecialchars($row['nama_pasien']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['subject']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['pertanyaan']); ?></td>
+                                    <td><?php echo $row['tanggapan'] ? htmlspecialchars($row['tanggapan']) : '-'; ?></td>
                                     <td>
-                                        <?php if (empty($row['jawaban'])) { ?>
+                                        <?php if (!$row['tanggapan']) { ?>
                                             <button type="button" class="btn btn-primary btn-sm" 
-                                                    onclick="tanggapiKonsultasi(<?php echo $row['id']; ?>)">
+                                                    onclick="showTanggapanModal(<?php echo $row['id']; ?>, 
+                                                    '<?php echo addslashes($row['pertanyaan']); ?>')">
                                                 <i class="fas fa-reply"></i> Tanggapi
                                             </button>
                                         <?php } else { ?>
-                                            <button type="button" class="btn btn-info btn-sm"
-                                                    onclick="editTanggapan(<?php echo $row['id']; ?>)">
+                                            <button type="button" class="btn btn-warning btn-sm" 
+                                                    onclick="showEditModal(<?php echo $row['id']; ?>, 
+                                                    '<?php echo addslashes($row['tanggapan']); ?>')">
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
                                         <?php } ?>
@@ -77,29 +79,28 @@ $result = $stmt->get_result();
 </div>
 
 <!-- Modal Tanggapan -->
-<div class="modal fade" id="modalTanggapan">
-    <div class="modal-dialog">
+<div class="modal fade" id="modalTanggapan" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary">
-                <h4 class="modal-title">Tanggapan Konsultasi</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Berikan Tanggapan</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <form id="formTanggapan">
                 <div class="modal-body">
                     <input type="hidden" id="id_konsultasi" name="id_konsultasi">
                     <div class="form-group">
+                        <label>Pertanyaan Pasien:</label>
+                        <p id="pertanyaanText" class="font-weight-bold"></p>
+                    </div>
+                    <div class="form-group">
                         <label>Tanggapan:</label>
-                        <textarea class="form-control" id="jawaban" name="jawaban" 
-                                rows="4" required></textarea>
+                        <textarea class="form-control" id="tanggapan" name="tanggapan" rows="4" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times"></i> Tutup
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
                 </div>
             </form>
         </div>
@@ -107,37 +108,17 @@ $result = $stmt->get_result();
 </div>
 
 <script>
-$(document).ready(function() {
-    $("#example1").DataTable({
-        "responsive": true,
-        "lengthChange": false,
-        "autoWidth": false,
-        "order": [[0, 'desc']]
-    });
-});
-
-function tanggapiKonsultasi(id) {
+function showTanggapanModal(id, pertanyaan) {
     $('#id_konsultasi').val(id);
-    $('#jawaban').val('');
+    $('#pertanyaanText').text(pertanyaan);
+    $('#tanggapan').val('');
     $('#modalTanggapan').modal('show');
 }
 
-function editTanggapan(id) {
-    $.ajax({
-        url: 'konsultasi_handler.php',
-        type: 'POST',
-        data: {
-            action: 'get_tanggapan',
-            id_konsultasi: id
-        },
-        success: function(response) {
-            if(response.success) {
-                $('#id_konsultasi').val(id);
-                $('#jawaban').val(response.data.jawaban);
-                $('#modalTanggapan').modal('show');
-            }
-        }
-    });
+function showEditModal(id, tanggapan) {
+    $('#id_konsultasi').val(id);
+    $('#tanggapan').val(tanggapan);
+    $('#modalTanggapan').modal('show');
 }
 
 $('#formTanggapan').submit(function(e) {
@@ -147,13 +128,12 @@ $('#formTanggapan').submit(function(e) {
         url: 'konsultasi_handler.php',
         type: 'POST',
         data: {
-            action: 'save_tanggapan',
+            action: 'tanggapi',
             id_konsultasi: $('#id_konsultasi').val(),
-            jawaban: $('#jawaban').val()
+            tanggapan: $('#tanggapan').val()
         },
         success: function(response) {
             if(response.success) {
-                $('#modalTanggapan').modal('hide');
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',

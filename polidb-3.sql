@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Waktu pembuatan: 18 Jan 2025 pada 05.15
+-- Waktu pembuatan: 18 Jan 2025 pada 05.44
 -- Versi server: 10.4.21-MariaDB
 -- Versi PHP: 8.0.19
 
@@ -185,9 +185,17 @@ CREATE TABLE `konsultasi` (
   `id_dokter` int(10) UNSIGNED NOT NULL,
   `subject` varchar(50) NOT NULL,
   `pertanyaan` text NOT NULL,
-  `jawaban` text DEFAULT NULL,
+  `tanggapan` text DEFAULT NULL,
   `tgl_konsultasi` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data untuk tabel `konsultasi`
+--
+
+INSERT INTO `konsultasi` (`id`, `id_pasien`, `id_dokter`, `subject`, `pertanyaan`, `tanggapan`, `tgl_konsultasi`) VALUES
+(1, 30, 21, 'Sering pusing', 'Hallo Dok, ak mau tanya ne kalau sering pusing kenapa ya?', 'Pusing bisa disebabkan oleh dehidrasi, kekurangan oksigen, kekurangan tidur, stess dan kelelahan', '2025-01-10 14:59:49'),
+(2, 30, 21, 'Sering mual', 'Halo Dok, mau tanya lagi ne saya sering mual setelah berolahraga. Hal itu disebabkan apa ya Dok?', NULL, '2025-01-12 13:19:49');
 
 -- --------------------------------------------------------
 

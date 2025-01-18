@@ -6,7 +6,8 @@ include_once("../../config/koneksi.php");
 $id_pasien = $_SESSION['user_id'];
 
 // Query untuk mengambil riwayat konsultasi
-$query = "SELECT k.*, d.nama as nama_dokter 
+$query = "SELECT k.*, d.nama as nama_dokter, k.tgl_konsultasi,
+          k.subject, k.pertanyaan, k.tanggapan
           FROM konsultasi k
           JOIN dokter d ON k.id_dokter = d.id
           WHERE k.id_pasien = ?
@@ -35,13 +36,13 @@ $result = $stmt->get_result();
                 <div class="card-header">
                     <button type="button" class="btn btn-primary float-right" 
                             data-toggle="modal" data-target="#modalTambahKonsultasi">
-                        <i class="fas fa-plus"></i> Tambah
+                        Tambah
                     </button>
                 </div>
                 <div class="card-body">
                     <table id="example1" class="table table-bordered table-striped">
                         <thead>
-                            <tr>
+                            <tr class="bg-primary text-white">
                                 <th>Tanggal Konsultasi</th>
                                 <th>Nama Dokter</th>
                                 <th>Subject</th>
@@ -54,18 +55,16 @@ $result = $stmt->get_result();
                             <?php while ($row = $result->fetch_assoc()) { ?>
                                 <tr>
                                     <td><?php echo date('Y-m-d H:i:s', strtotime($row['tgl_konsultasi'])); ?></td>
-                                    <td><?php echo $row['nama_dokter']; ?></td>
-                                    <td><?php echo $row['subject']; ?></td>
-                                    <td><?php echo $row['pertanyaan']; ?></td>
-                                    <td><?php echo $row['jawaban'] ?: '-'; ?></td>
+                                    <td><?php echo htmlspecialchars($row['nama_dokter']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['subject']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['pertanyaan']); ?></td>
+                                    <td><?php echo $row['tanggapan'] ? htmlspecialchars($row['tanggapan']) : '-'; ?></td>
                                     <td>
-                                        <?php if (!$row['jawaban']) { ?>
-                                            <button class="btn btn-info btn-sm" 
-                                                    onclick="editKonsultasi(<?php echo $row['id']; ?>)">
+                                        <?php if (!$row['tanggapan']) { ?>
+                                            <button class="btn btn-warning btn-sm" onclick="editKonsultasi(<?php echo $row['id']; ?>)">
                                                 Edit
                                             </button>
-                                            <button class="btn btn-danger btn-sm" 
-                                                    onclick="hapusKonsultasi(<?php echo $row['id']; ?>)">
+                                            <button class="btn btn-danger btn-sm" onclick="hapusKonsultasi(<?php echo $row['id']; ?>)">
                                                 Hapus
                                             </button>
                                         <?php } ?>
@@ -84,9 +83,9 @@ $result = $stmt->get_result();
 <div class="modal fade" id="modalTambahKonsultasi">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h4 class="modal-title">Tambah Konsultasi</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <form id="formTambahKonsultasi">
                 <div class="modal-body">
@@ -127,13 +126,10 @@ $result = $stmt->get_result();
 
 <script>
 $(document).ready(function() {
-    // Inisialisasi Select2
     $('.select2').select2({
-        theme: 'bootstrap4',
-        width: '100%'
+        theme: 'bootstrap4'
     });
 
-    // Inisialisasi DataTable
     $('#example1').DataTable({
         "responsive": true,
         "lengthChange": false,
@@ -141,7 +137,6 @@ $(document).ready(function() {
         "order": [[0, 'desc']]
     });
 
-    // Handler submit form tambah konsultasi
     $('#formTambahKonsultasi').submit(function(e) {
         e.preventDefault();
         
@@ -159,9 +154,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'success',
                         title: 'Berhasil!',
-                        text: 'Konsultasi berhasil ditambahkan',
-                        showConfirmButton: false,
-                        timer: 1500
+                        text: 'Konsultasi berhasil ditambahkan'
                     }).then(() => {
                         location.reload();
                     });
@@ -176,7 +169,7 @@ $(document).ready(function() {
 function hapusKonsultasi(id) {
     Swal.fire({
         title: 'Apakah Anda yakin?',
-        text: "Data konsultasi akan dihapus permanen!",
+        text: "Data konsultasi akan dihapus!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -194,15 +187,8 @@ function hapusKonsultasi(id) {
                 },
                 success: function(response) {
                     if(response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Terhapus!',
-                            text: 'Data konsultasi berhasil dihapus',
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => {
-                            location.reload();
-                        });
+                        Swal.fire('Terhapus!', 'Data konsultasi berhasil dihapus', 'success')
+                            .then(() => location.reload());
                     } else {
                         Swal.fire('Gagal!', response.message, 'error');
                     }

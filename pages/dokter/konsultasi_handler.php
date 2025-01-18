@@ -13,42 +13,32 @@ $id_dokter = $_SESSION['user_id'];
 
 if(isset($_POST['action'])) {
     switch($_POST['action']) {
-        case 'get_tanggapan':
-            if(!isset($_POST['id_konsultasi'])) {
-                echo json_encode(['success' => false, 'message' => 'ID konsultasi tidak valid']);
-                exit;
-            }
-            
-            $id_konsultasi = mysqli_real_escape_string($koneksi, $_POST['id_konsultasi']);
-            
-            $query = "SELECT jawaban FROM konsultasi WHERE id = ? AND id_dokter = ?";
-            $stmt = mysqli_prepare($koneksi, $query);
-            mysqli_stmt_bind_param($stmt, "ii", $id_konsultasi, $id_dokter);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-            
-            if($row = mysqli_fetch_assoc($result)) {
-                echo json_encode(['success' => true, 'data' => $row]);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Data tidak ditemukan']);
-            }
-            break;
-            
-        case 'save_tanggapan':
-            if(!isset($_POST['id_konsultasi']) || !isset($_POST['jawaban'])) {
+        case 'tanggapi':
+            if(!isset($_POST['id_konsultasi']) || !isset($_POST['tanggapan'])) {
                 echo json_encode(['success' => false, 'message' => 'Data tidak lengkap']);
                 exit;
             }
             
             $id_konsultasi = mysqli_real_escape_string($koneksi, $_POST['id_konsultasi']);
-            $jawaban = mysqli_real_escape_string($koneksi, $_POST['jawaban']);
+            $tanggapan = mysqli_real_escape_string($koneksi, $_POST['tanggapan']);
             
-            $query = "UPDATE konsultasi SET jawaban = ? WHERE id = ? AND id_dokter = ?";
+            // Pastikan konsultasi milik dokter yang bersangkutan
+            $query = "UPDATE konsultasi 
+                     SET tanggapan = ? 
+                     WHERE id = ? AND id_dokter = ?";
+            
             $stmt = mysqli_prepare($koneksi, $query);
-            mysqli_stmt_bind_param($stmt, "sii", $jawaban, $id_konsultasi, $id_dokter);
+            mysqli_stmt_bind_param($stmt, "sii", $tanggapan, $id_konsultasi, $id_dokter);
             
             if(mysqli_stmt_execute($stmt)) {
-                echo json_encode(['success' => true]);
+                if(mysqli_affected_rows($koneksi) > 0) {
+                    echo json_encode(['success' => true]);
+                } else {
+                    echo json_encode([
+                        'success' => false, 
+                        'message' => 'Konsultasi tidak ditemukan atau bukan milik Anda'
+                    ]);
+                }
             } else {
                 echo json_encode(['success' => false, 'message' => 'Gagal menyimpan tanggapan']);
             }
