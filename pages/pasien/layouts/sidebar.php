@@ -29,6 +29,12 @@
                         <p>Riwayat Periksa</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="konsultasi.php" class="nav-link">
+                        <i class="nav-icon fas fa-comments"></i>
+                        <p>Konsultasi Online</p>
+                    </a>
+                </li>
             </ul>
         </nav>
     </div>
